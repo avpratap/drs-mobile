@@ -62,7 +62,9 @@ class DrsQuantityStepper extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _StepButton(
-                icon: value == 1 && min == 0 ? Icons.delete_outline : Icons.remove,
+                icon: value == 1 && min == 0
+                    ? Icons.delete_outline
+                    : Icons.remove,
                 tooltip: 'Decrease',
                 onPressed: canDec ? () => onChanged!(value - 1) : null,
               ),
@@ -71,9 +73,8 @@ class DrsQuantityStepper extends StatelessWidget {
                 child: Text(
                   '$value',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: scheme.onPrimary,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(color: scheme.onPrimary),
                 ),
               ),
               _StepButton(
@@ -90,7 +91,11 @@ class DrsQuantityStepper extends StatelessWidget {
 }
 
 class _StepButton extends StatelessWidget {
-  const _StepButton({required this.icon, required this.tooltip, this.onPressed});
+  const _StepButton({
+    required this.icon,
+    required this.tooltip,
+    this.onPressed,
+  });
 
   final IconData icon;
   final String tooltip;

@@ -15,7 +15,9 @@ enum ProductLine {
   /// Maps the backend's free-text `category` (e.g. "Milk", "Chaas") to a line.
   static ProductLine fromCategory(String? category) {
     final c = (category ?? '').trim().toLowerCase();
-    if (c.contains('buttermilk') || c.contains('chaas') || c.contains('chhach')) {
+    if (c.contains('buttermilk') ||
+        c.contains('chaas') ||
+        c.contains('chhach')) {
       return ProductLine.buttermilk;
     }
     if (c.contains('milk') || c.contains('doodh')) return ProductLine.milk;

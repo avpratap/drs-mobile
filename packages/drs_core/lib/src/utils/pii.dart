@@ -21,8 +21,5 @@ abstract final class Pii {
   static String redact(String text) => text
       .replaceAll(_jwt, '[jwt]')
       .replaceAll(_email, '[email]')
-      .replaceAllMapped(
-        _phoneLike,
-        (m) => m[0]!.replaceAll(_digits, '•'),
-      );
+      .replaceAllMapped(_phoneLike, (m) => m[0]!.replaceAll(_digits, '•'));
 }

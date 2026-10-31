@@ -4,7 +4,13 @@ import 'drs_logo.dart';
 
 /// App bar with either a [title] or, by default, the DRS wordmark.
 class DrsAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const DrsAppBar({super.key, this.title, this.actions, this.leading, this.bottom});
+  const DrsAppBar({
+    super.key,
+    this.title,
+    this.actions,
+    this.leading,
+    this.bottom,
+  });
 
   final String? title;
   final List<Widget>? actions;

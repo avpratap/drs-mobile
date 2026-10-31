@@ -24,3 +24,8 @@ coverage/
 **/ios/Runner/GoogleService-Info.plist
 *.jks
 *.keystore
+env/*.json
+!env/*.example.json
+
+# Local tool downloads (openapi-generator jar)
+.tools/

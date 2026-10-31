@@ -26,23 +26,23 @@ melos:
   scripts:
     analyze:
       description: Static analysis across every package (must be zero issues).
-      run: flutter analyze --no-pub .
       exec:
+        command: flutter analyze --no-pub .
         concurrency: 1
         failFast: true
 
     format:
-      description: Check formatting of hand-written code.
-      run: dart format --output=none --set-exit-if-changed lib test
+      description: Check formatting of hand-written code (generated client excluded).
       exec:
+        command: dart format --output=none --set-exit-if-changed lib test
         concurrency: 4
       packageFilters:
         ignore: [drs_api]
 
     test:
       description: Run tests in every package that has a test/ directory.
-      run: flutter test --no-pub
       exec:
+        command: flutter test --no-pub
         concurrency: 1
         failFast: true
       packageFilters:
@@ -50,8 +50,9 @@ melos:
 
     gen:
       description: Run build_runner (json_serializable, drift, riverpod_generator).
-      run: dart run build_runner build --delete-conflicting-outputs
       exec:
+        command: dart run build_runner build --delete-conflicting-outputs
         concurrency: 1
+        orderDependents: true
       packageFilters:
         dependsOn: build_runner

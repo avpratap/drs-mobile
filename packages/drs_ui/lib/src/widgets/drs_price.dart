@@ -52,7 +52,8 @@ class DrsPrice extends StatelessWidget {
           children: [
             if (isFrom) TextSpan(text: 'from ', style: muted),
             TextSpan(text: amount.format(), style: main),
-            if (unitLabel != null) TextSpan(text: ' / $unitLabel', style: muted),
+            if (unitLabel != null)
+              TextSpan(text: ' / $unitLabel', style: muted),
             if (showCompare) ...[
               const TextSpan(text: '  '),
               TextSpan(

@@ -119,6 +119,8 @@ class DrsButton extends StatelessWidget {
       excludeSemantics: isLoading,
       child: button,
     );
-    return expand ? SizedBox(width: double.infinity, child: semantic) : semantic;
+    return expand
+        ? SizedBox(width: double.infinity, child: semantic)
+        : semantic;
   }
 }

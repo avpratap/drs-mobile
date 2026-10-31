@@ -21,11 +21,17 @@ void main() {
       expect(s.surface, const Color(0xFFF4EADE));
       expect(s.onSurface, const Color(0xFF1E1A1E));
       expect(s.onPrimary, const Color(0xFFF4EADE));
-      expect(DrsTheme.light.extension<DrsColors>()!.sky, const Color(0xFF6FC5F4));
+      expect(
+        DrsTheme.light.extension<DrsColors>()!.sky,
+        const Color(0xFF6FC5F4),
+      );
     });
 
     test('Poppins is the default family; dark theme is available', () {
-      expect(DrsTheme.light.textTheme.bodyMedium!.fontFamily, contains('Poppins'));
+      expect(
+        DrsTheme.light.textTheme.bodyMedium!.fontFamily,
+        contains('Poppins'),
+      );
       expect(DrsTheme.dark.brightness, Brightness.dark);
     });
 
@@ -34,7 +40,11 @@ void main() {
       const scheme = DrsTheme.lightScheme;
       expect(brand.accentFor(ProductLine.milk, scheme), DrsPalette.sky);
       expect(brand.accentFor(ProductLine.buttermilk, scheme), DrsPalette.sky);
-      for (final l in [ProductLine.ghee, ProductLine.curd, ProductLine.paneer]) {
+      for (final l in [
+        ProductLine.ghee,
+        ProductLine.curd,
+        ProductLine.paneer,
+      ]) {
         expect(brand.accentFor(l, scheme), scheme.primary);
       }
     });
@@ -66,17 +76,23 @@ void main() {
     expect(find.text('Add'), findsOneWidget);
   });
 
-  testWidgets('DrsButton shows a spinner and blocks taps while loading', (t) async {
+  testWidgets('DrsButton shows a spinner and blocks taps while loading', (
+    t,
+  ) async {
     var taps = 0;
     await t.pumpWidget(
-      _wrap(DrsButton(label: 'Send OTP', isLoading: true, onPressed: () => taps++)),
+      _wrap(
+        DrsButton(label: 'Send OTP', isLoading: true, onPressed: () => taps++),
+      ),
     );
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     await t.tap(find.byType(FilledButton));
     expect(taps, 0);
   });
 
-  testWidgets('DrsProductCard renders at 2x text scale without overflow', (t) async {
+  testWidgets('DrsProductCard renders at 2x text scale without overflow', (
+    t,
+  ) async {
     final product = Product(
       id: 1,
       sku: 'MILK-500',
@@ -100,6 +116,9 @@ void main() {
     );
     expect(t.takeException(), isNull);
     expect(find.text('500 ml'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp(r'from ₹32 per|from ₹32')), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp(r'from ₹32 per|from ₹32')),
+      findsOneWidget,
+    );
   });
 }

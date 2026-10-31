@@ -196,9 +196,7 @@ abstract final class DrsTheme {
           borderRadius: BorderRadius.circular(DrsRadius.md),
         ),
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: scheme.primary,
-      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
       dividerTheme: DividerThemeData(color: scheme.outlineVariant, space: 1),
     );
   }

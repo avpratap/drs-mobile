@@ -16,7 +16,9 @@ enum OrderStatus {
     'pending' || 'placed' || 'new' => OrderStatus.pending,
     'confirmed' || 'accepted' => OrderStatus.confirmed,
     'packed' || 'ready' => OrderStatus.packed,
-    'out_for_delivery' || 'dispatched' || 'shipped' => OrderStatus.outForDelivery,
+    'out_for_delivery' ||
+    'dispatched' ||
+    'shipped' => OrderStatus.outForDelivery,
     'delivered' || 'completed' => OrderStatus.delivered,
     'cancelled' || 'canceled' => OrderStatus.cancelled,
     'failed' => OrderStatus.failed,

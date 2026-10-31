@@ -41,7 +41,11 @@ class DrsProductCard extends StatelessWidget {
               Container(width: 4, color: accent),
               Padding(
                 padding: const EdgeInsets.all(DrsSpacing.sm),
-                child: _Thumb(url: product.imageUrl, tint: tint, accent: accent),
+                child: _Thumb(
+                  url: product.imageUrl,
+                  tint: tint,
+                  accent: accent,
+                ),
               ),
               Expanded(
                 child: Padding(
@@ -97,7 +101,11 @@ class _Thumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final placeholder = Icon(Icons.local_drink_outlined, color: accent, size: 32);
+    final placeholder = Icon(
+      Icons.local_drink_outlined,
+      color: accent,
+      size: 32,
+    );
     return ClipRRect(
       borderRadius: BorderRadius.circular(DrsRadius.md),
       child: Container(
