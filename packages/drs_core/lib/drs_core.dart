@@ -8,6 +8,7 @@ export 'src/config/drs_env.dart';
 export 'src/models/account.dart';
 export 'src/models/address.dart';
 export 'src/models/cart.dart';
+export 'src/models/delivery.dart';
 export 'src/models/money.dart';
 export 'src/models/order.dart';
 export 'src/models/pack.dart';
