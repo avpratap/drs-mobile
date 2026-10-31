@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Push notifications (FCM). Runtime prompt on Android 13+ (API 33). The
+         firebase_messaging plugin adds its own WAKE_LOCK/RECEIVE_BOOT_COMPLETED
+         entries when it is added in the push milestone. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="DRS"
         android:name="${applicationName}"

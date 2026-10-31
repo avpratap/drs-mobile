@@ -1,5 +1,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Push notifications (FCM). Runtime prompt on Android 13+ (API 33). The
+         firebase_messaging plugin adds its own WAKE_LOCK/RECEIVE_BOOT_COMPLETED
+         entries when it is added in the push milestone. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- Rider location while the app is in use: route order, navigation, and
+         posting the rider position (post_driver_location). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!-- Proof-of-delivery photos. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
+
+    <!-- Live tracking while the screen is off is planned as a LOCATION
+         FOREGROUND SERVICE (ongoing notification), not ACCESS_BACKGROUND_LOCATION,
+         which needs a separate Play policy review. Enable together with the
+         tracking service in the route milestone:
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    -->
     <application
         android:label="DRS Delivery"
         android:name="${applicationName}"

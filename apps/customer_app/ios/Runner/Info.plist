@@ -8,6 +8,13 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<!-- Push notifications (FCM via APNs). iOS asks for notification permission at
+	     runtime and needs no usage string. Also enable the "Push Notifications"
+	     capability (aps-environment entitlement) in Xcode when FCM is added. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
