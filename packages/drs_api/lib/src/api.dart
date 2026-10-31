@@ -13,6 +13,7 @@ import 'package:drs_api/src/api/billing_api.dart';
 import 'package:drs_api/src/api/cart_api.dart';
 import 'package:drs_api/src/api/delivery_api.dart';
 import 'package:drs_api/src/api/orders_api.dart';
+import 'package:drs_api/src/api/payments_api.dart';
 import 'package:drs_api/src/api/products_api.dart';
 import 'package:drs_api/src/api/subscriptions_api.dart';
 
@@ -141,6 +142,12 @@ class DrsApi {
   /// by doing that all interceptors will not be executed
   OrdersApi getOrdersApi() {
     return OrdersApi(dio);
+  }
+
+  /// Get PaymentsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  PaymentsApi getPaymentsApi() {
+    return PaymentsApi(dio);
   }
 
   /// Get ProductsApi instance, base route and serializer can be overridden by a given but be careful,

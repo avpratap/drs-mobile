@@ -10,6 +10,7 @@ All URIs are relative to *http://localhost:8000*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**getProduct**](ProductsApi.md#getproduct) | **GET** /api/v1/products/{product_id} | 
+[**getProductFull**](ProductsApi.md#getproductfull) | **GET** /api/v1/products/{product_id}/full | 
 [**listProductCategories**](ProductsApi.md#listproductcategories) | **GET** /api/v1/products/categories | 
 [**listProducts**](ProductsApi.md#listproducts) | **GET** /api/v1/products | 
 
@@ -43,6 +44,47 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ProductOut**](ProductOut.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **getProductFull**
+> ProductFullOut getProductFull(productId)
+
+
+
+### Example
+```dart
+import 'package:drs_api/api.dart';
+
+final api = DrsApi().getProductsApi();
+final int productId = 56; // int | 
+
+try {
+    final response = api.getProductFull(productId);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling ProductsApi->getProductFull: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **productId** | **int**|  | 
+
+### Return type
+
+[**ProductFullOut**](ProductFullOut.md)
 
 ### Authorization
 

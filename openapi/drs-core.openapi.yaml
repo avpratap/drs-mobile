@@ -1,7 +1,8 @@
 # DRS core API — mobile subset of the drs-backend contract.
 #
 # Derived by hand from avpratap/drs-backend `app/api/v1/*` + `app/schemas/*`
-# (commit b6fb39c). Every operationId is copied VERBATIM from the FastAPI route
+# (commit b6fb39c; milestone 2 additions: variants, addresses, payments,
+# create_order, set_override, track_order). Every operationId is copied VERBATIM from the FastAPI route
 # so this file stays a strict subset of the server-generated spec.
 #
 # Replace with the real export as soon as possible:
@@ -25,6 +26,7 @@ tags:
   - name: orders
   - name: account
   - name: delivery
+  - name: payments
 paths:
   # ---------------------------------------------------------------- auth
   /api/v1/auth/otp/request:
@@ -162,6 +164,21 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ProductOut' }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /api/v1/products/{product_id}/full:
+    get:
+      tags: [products]
+      operationId: get_product_full
+      security: []
+      parameters:
+        - { name: product_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Product with its active pack-size variants (storefront-priced)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductFullOut' }
         '404': { $ref: '#/components/responses/Error' }
 
   # ---------------------------------------------------------------- cart
@@ -312,6 +329,25 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SubscriptionDetail' }
+  /api/v1/subscriptions/{sub_id}/overrides:
+    post:
+      tags: [subscriptions]
+      operationId: set_override
+      parameters:
+        - { $ref: '#/components/parameters/SubId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OverrideIn' }
+      responses:
+        '200':
+          description: Override saved (override_qty 0 = skip that day)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OverrideSavedOut' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
   /api/v1/subscriptions/{sub_id}/pause:
     post:
       tags: [subscriptions]
@@ -391,6 +427,22 @@ paths:
 
   # ---------------------------------------------------------------- orders
   /api/v1/orders:
+    post:
+      tags: [orders]
+      operationId: create_order
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderCreate' }
+      responses:
+        '200':
+          description: Created order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderOut' }
     get:
       tags: [orders]
       operationId: list_orders
@@ -430,6 +482,56 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/OrderOut' }
 
+  /api/v1/orders/{order_id}/tracking:
+    get:
+      tags: [orders]
+      operationId: track_order
+      parameters:
+        - { $ref: '#/components/parameters/OrderId' }
+      responses:
+        '200':
+          description: Order + payment state and courier shipments with events (newest first)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderTrackingOut' }
+
+  # ---------------------------------------------------------------- payments
+  /api/v1/payments/create:
+    post:
+      tags: [payments]
+      operationId: create_payment
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentCreate' }
+      responses:
+        '200':
+          description: Gateway order to open in Razorpay checkout (key_id "" = dev stub)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentCreateOut' }
+        '409': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
+  /api/v1/payments/verify:
+    post:
+      tags: [payments]
+      operationId: verify_payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentVerify' }
+      responses:
+        '200':
+          description: Payment finalized (idempotent)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentVerifyOut' }
+        '400': { $ref: '#/components/responses/Error' }
+
   # ---------------------------------------------------------------- account
   /api/v1/profile:
     get:
@@ -441,6 +543,45 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ProfileOut' }
+
+  /api/v1/addresses:
+    get:
+      tags: [account]
+      operationId: list_addresses
+      responses:
+        '200':
+          description: Caller's saved delivery addresses
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AddressOut' }
+    post:
+      tags: [account]
+      operationId: create_address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddressIn' }
+      responses:
+        '201':
+          description: Created address
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AddressOut' }
+  /api/v1/addresses/{address_id}/default:
+    post:
+      tags: [account]
+      operationId: set_default_address
+      parameters:
+        - { name: address_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Address now default
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AddressOut' }
 
   # ---------------------------------------------------------------- delivery (staff)
   /api/v1/delivery/orders:
@@ -851,3 +992,172 @@ components:
         failed: { type: integer }
         pending: { type: integer }
         cash_collected: { type: number }
+    # milestone 2
+    VariantOut:
+      type: object
+      required: [id, product_id, sku, label, pack_size, price, status, sort_order]
+      properties:
+        id: { type: integer }
+        product_id: { type: integer }
+        sku: { type: string }
+        label: { type: string }
+        pack_size: { type: number, description: 'Cart qty for one pack, in the product uom' }
+        price: { type: number, description: 'Legacy catalogue field — do NOT display; use selling_price' }
+        mrp: { type: number, nullable: true }
+        image_url: { type: string, nullable: true }
+        status: { type: string }
+        sort_order: { type: integer }
+        selling_price: { type: number, nullable: true, description: 'GST-inclusive storefront price of this pack' }
+        price_available: { type: boolean, nullable: true }
+        show_mrp_strike: { type: boolean, default: false }
+    ProductFullOut:
+      type: object
+      required: [id, sku, name, status]
+      properties:
+        id: { type: integer }
+        sku: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        uom: { type: string, default: piece }
+        pack_size: { type: number, default: 1 }
+        is_subscribable: { type: boolean, default: true }
+        perishable: { type: boolean, default: true }
+        gst_rate: { type: number, default: 0 }
+        category: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        status: { type: string }
+        from_price: { type: number, nullable: true }
+        avg_rating: { type: number, default: 0 }
+        rating_count: { type: integer, default: 0 }
+        variants:
+          type: array
+          items: { $ref: '#/components/schemas/VariantOut' }
+    OrderItemIn:
+      type: object
+      required: [product_id, qty]
+      properties:
+        product_id: { type: integer }
+        qty: { type: number, exclusiveMinimum: 0, maximum: 100000 }
+    OrderCreate:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/OrderItemIn' }
+        address: { type: string, nullable: true, maxLength: 1024 }
+        state: { type: string, nullable: true, maxLength: 120 }
+        pincode: { type: string, nullable: true }
+        coupon_code: { type: string, nullable: true, maxLength: 32 }
+    TrackingEventOut:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string }
+        location: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+        event_time: { type: string, format: date-time, nullable: true }
+    ShipmentTrackOut:
+      type: object
+      required: [id, shipment_no, status]
+      properties:
+        id: { type: integer }
+        shipment_no: { type: string }
+        status: { type: string }
+        courier: { type: string, nullable: true }
+        awb: { type: string, nullable: true }
+        tracking_url: { type: string, nullable: true }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/TrackingEventOut' }
+    OrderTrackingOut:
+      type: object
+      required: [order_id, order_no, status, payment_status]
+      properties:
+        order_id: { type: integer }
+        order_no: { type: string }
+        status: { type: string }
+        payment_status: { type: string }
+        shipments:
+          type: array
+          items: { $ref: '#/components/schemas/ShipmentTrackOut' }
+    PaymentCreate:
+      type: object
+      required: [purpose]
+      properties:
+        amount: { type: number, nullable: true, description: 'Required for wallet_topup; ignored for order_payment' }
+        purpose: { type: string, description: 'wallet_topup | order_payment' }
+        order_id: { type: integer, nullable: true }
+    PaymentCreateOut:
+      type: object
+      required: [payment_id, gateway_order_id, amount, key_id]
+      properties:
+        payment_id: { type: integer }
+        gateway_order_id: { type: string }
+        amount: { type: number }
+        key_id: { type: string, description: 'Razorpay publishable key id ("" in dev stub)' }
+    PaymentVerify:
+      type: object
+      required: [gateway_order_id, gateway_payment_id, signature]
+      properties:
+        gateway_order_id: { type: string }
+        gateway_payment_id: { type: string }
+        signature: { type: string, description: 'Razorpay signature; "dev" in non-prod stub mode' }
+    PaymentVerifyOut:
+      type: object
+      required: [detail, payment_id, status]
+      properties:
+        detail: { type: string }
+        payment_id: { type: integer }
+        status: { type: string }
+    AddressIn:
+      type: object
+      required: [line1, city, state, pincode]
+      properties:
+        label: { type: string, nullable: true, maxLength: 40 }
+        contact_name: { type: string, nullable: true, maxLength: 120 }
+        contact_phone: { type: string, nullable: true, pattern: '^\+?[0-9]{10,15}$' }
+        line1: { type: string, minLength: 1, maxLength: 255 }
+        line2: { type: string, nullable: true, maxLength: 255 }
+        landmark: { type: string, nullable: true, maxLength: 255 }
+        city: { type: string, minLength: 1, maxLength: 120 }
+        state: { type: string, minLength: 1, maxLength: 120 }
+        pincode: { type: string, pattern: '^[1-9][0-9]{5}$' }
+        country: { type: string, default: IN }
+        is_default: { type: boolean, default: false }
+    AddressOut:
+      type: object
+      required: [id, account_id, line1, city, state, pincode, country, is_default, status]
+      properties:
+        id: { type: integer }
+        account_id: { type: integer }
+        label: { type: string, nullable: true }
+        contact_name: { type: string, nullable: true }
+        contact_phone: { type: string, nullable: true }
+        line1: { type: string }
+        line2: { type: string, nullable: true }
+        landmark: { type: string, nullable: true }
+        city: { type: string }
+        state: { type: string }
+        pincode: { type: string }
+        country: { type: string }
+        is_default: { type: boolean }
+        status: { type: string }
+    OverrideIn:
+      type: object
+      required: [product_id, for_date, override_qty]
+      properties:
+        product_id: { type: integer }
+        for_date: { type: string, format: date }
+        override_qty: { type: number, minimum: 0, maximum: 100000, description: '0 = skip that day' }
+        note: { type: string, nullable: true, maxLength: 255 }
+    OverrideSavedOut:
+      type: object
+      required: [detail, product_id, for_date, qty]
+      properties:
+        detail: { type: string }
+        product_id: { type: integer }
+        for_date: { type: string }
+        qty: { type: number }

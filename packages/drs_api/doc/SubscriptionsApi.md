@@ -16,6 +16,7 @@ Method | HTTP request | Description
 [**listSubscriptions**](SubscriptionsApi.md#listsubscriptions) | **GET** /api/v1/subscriptions | 
 [**pauseSubscription**](SubscriptionsApi.md#pausesubscription) | **POST** /api/v1/subscriptions/{sub_id}/pause | 
 [**resumeSubscription**](SubscriptionsApi.md#resumesubscription) | **POST** /api/v1/subscriptions/{sub_id}/resume | 
+[**setOverride**](SubscriptionsApi.md#setoverride) | **POST** /api/v1/subscriptions/{sub_id}/overrides | 
 [**setSubscriptionItems**](SubscriptionsApi.md#setsubscriptionitems) | **PUT** /api/v1/subscriptions/{sub_id}/items | 
 
 
@@ -306,6 +307,49 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **setOverride**
+> OverrideSavedOut setOverride(subId, overrideIn)
+
+
+
+### Example
+```dart
+import 'package:drs_api/api.dart';
+
+final api = DrsApi().getSubscriptionsApi();
+final int subId = 56; // int | 
+final OverrideIn overrideIn = ; // OverrideIn | 
+
+try {
+    final response = api.setOverride(subId, overrideIn);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling SubscriptionsApi->setOverride: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **subId** | **int**|  | 
+ **overrideIn** | [**OverrideIn**](OverrideIn.md)|  | 
+
+### Return type
+
+[**OverrideSavedOut**](OverrideSavedOut.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
