@@ -12,6 +12,9 @@ import 'package:drs_api/src/model/delivery_order_item_out.dart';
 import 'package:drs_api/src/model/delivery_order_out.dart';
 import 'package:drs_api/src/model/delivery_summary_out.dart';
 import 'package:drs_api/src/model/detail_out.dart';
+import 'package:drs_api/src/model/device_token_in.dart';
+import 'package:drs_api/src/model/device_token_out.dart';
+import 'package:drs_api/src/model/device_token_unregister_in.dart';
 import 'package:drs_api/src/model/fail_in.dart';
 import 'package:drs_api/src/model/http_validation_error.dart';
 import 'package:drs_api/src/model/otp_request.dart';
@@ -100,6 +103,12 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return DeliverySummaryOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'DetailOut':
           return DetailOut.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'DeviceTokenIn':
+          return DeviceTokenIn.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'DeviceTokenOut':
+          return DeviceTokenOut.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'DeviceTokenUnregisterIn':
+          return DeviceTokenUnregisterIn.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'FailIn':
           return FailIn.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'HTTPValidationError':

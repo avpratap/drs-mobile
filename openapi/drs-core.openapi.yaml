@@ -3,7 +3,8 @@
 # Derived by hand from avpratap/drs-backend `app/api/v1/*` + `app/schemas/*`
 # (commit b6fb39c; milestone 2 additions: variants, addresses, payments,
 # create_order, set_override, track_order; milestone 3: delivery_route,
-# deliver_order, fail_delivery_order, upload_pod_asset). Every operationId is copied VERBATIM from the FastAPI route
+# deliver_order, fail_delivery_order, upload_pod_asset; milestone 4:
+# register_device_token, unregister_device_token_body). Every operationId is copied VERBATIM from the FastAPI route
 # so this file stays a strict subset of the server-generated spec.
 #
 # Replace with the real export as soon as possible:
@@ -28,6 +29,7 @@ tags:
   - name: account
   - name: delivery
   - name: payments
+  - name: devices
 paths:
   # ---------------------------------------------------------------- auth
   /api/v1/auth/otp/request:
@@ -583,6 +585,36 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AddressOut' }
+
+  /api/v1/account/device-tokens:
+    post:
+      tags: [devices]
+      operationId: register_device_token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceTokenIn' }
+      responses:
+        '200':
+          description: Registered (idempotent on the token; re-assigns it to the caller)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceTokenOut' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/v1/account/device-tokens/unregister:
+    post:
+      tags: [devices]
+      operationId: unregister_device_token_body
+      description: Deactivate a token sent in the BODY (keeps the token out of URLs and logs).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceTokenUnregisterIn' }
+      responses:
+        '204':
+          description: Deactivated (no-op if not the caller's token)
 
   # ---------------------------------------------------------------- delivery (staff)
   /api/v1/delivery/orders:
@@ -1291,3 +1323,22 @@ components:
       properties:
         url: { type: string, description: 'media:<key> reference' }
         preview_url: { type: string }
+    # milestone 4
+    DeviceTokenIn:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, minLength: 64, maxLength: 512, description: 'FCM registration token (PII)' }
+        platform: { type: string, default: android, description: 'ios | android | web' }
+    DeviceTokenOut:
+      type: object
+      required: [token, platform, active]
+      properties:
+        token: { type: string }
+        platform: { type: string }
+        active: { type: boolean }
+    DeviceTokenUnregisterIn:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, minLength: 1, maxLength: 512 }
