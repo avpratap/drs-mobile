@@ -6,10 +6,13 @@ import 'package:drs_api/src/model/cart_item_qty_in.dart';
 import 'package:drs_api/src/model/cart_line_out.dart';
 import 'package:drs_api/src/model/cart_out.dart';
 import 'package:drs_api/src/model/checkout_in.dart';
+import 'package:drs_api/src/model/deliver_item.dart';
+import 'package:drs_api/src/model/deliver_request.dart';
 import 'package:drs_api/src/model/delivery_order_item_out.dart';
 import 'package:drs_api/src/model/delivery_order_out.dart';
 import 'package:drs_api/src/model/delivery_summary_out.dart';
 import 'package:drs_api/src/model/detail_out.dart';
+import 'package:drs_api/src/model/fail_in.dart';
 import 'package:drs_api/src/model/http_validation_error.dart';
 import 'package:drs_api/src/model/otp_request.dart';
 import 'package:drs_api/src/model/otp_request_response.dart';
@@ -21,6 +24,7 @@ import 'package:drs_api/src/model/order_out.dart';
 import 'package:drs_api/src/model/order_tracking_out.dart';
 import 'package:drs_api/src/model/override_in.dart';
 import 'package:drs_api/src/model/override_saved_out.dart';
+import 'package:drs_api/src/model/podin.dart';
 import 'package:drs_api/src/model/payment_create.dart';
 import 'package:drs_api/src/model/payment_create_out.dart';
 import 'package:drs_api/src/model/payment_verify.dart';
@@ -34,6 +38,7 @@ import 'package:drs_api/src/model/quote_in.dart';
 import 'package:drs_api/src/model/quote_line_out.dart';
 import 'package:drs_api/src/model/quote_out.dart';
 import 'package:drs_api/src/model/refresh_request.dart';
+import 'package:drs_api/src/model/route_stop_out.dart';
 import 'package:drs_api/src/model/shipment_track_out.dart';
 import 'package:drs_api/src/model/subscription_create.dart';
 import 'package:drs_api/src/model/subscription_detail.dart';
@@ -42,6 +47,7 @@ import 'package:drs_api/src/model/subscription_item_out.dart';
 import 'package:drs_api/src/model/subscription_out.dart';
 import 'package:drs_api/src/model/token_pair.dart';
 import 'package:drs_api/src/model/tracking_event_out.dart';
+import 'package:drs_api/src/model/upload_out.dart';
 import 'package:drs_api/src/model/user_out.dart';
 import 'package:drs_api/src/model/validation_error_item.dart';
 import 'package:drs_api/src/model/variant_out.dart';
@@ -82,6 +88,10 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return CartOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'CheckoutIn':
           return CheckoutIn.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'DeliverItem':
+          return DeliverItem.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'DeliverRequest':
+          return DeliverRequest.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'DeliveryOrderItemOut':
           return DeliveryOrderItemOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'DeliveryOrderOut':
@@ -90,6 +100,8 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return DeliverySummaryOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'DetailOut':
           return DetailOut.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'FailIn':
+          return FailIn.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'HTTPValidationError':
           return HTTPValidationError.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'OTPRequest':
@@ -112,6 +124,8 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return OverrideIn.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'OverrideSavedOut':
           return OverrideSavedOut.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'PODIn':
+          return PODIn.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'PaymentCreate':
           return PaymentCreate.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'PaymentCreateOut':
@@ -138,6 +152,8 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return QuoteOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'RefreshRequest':
           return RefreshRequest.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'RouteStopOut':
+          return RouteStopOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'ShipmentTrackOut':
           return ShipmentTrackOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'SubscriptionCreate':
@@ -154,6 +170,8 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return TokenPair.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'TrackingEventOut':
           return TrackingEventOut.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'UploadOut':
+          return UploadOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'UserOut':
           return UserOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'ValidationErrorItem':

@@ -11,11 +11,14 @@ doc/CartItemQtyIn.md
 doc/CartLineOut.md
 doc/CartOut.md
 doc/CheckoutIn.md
+doc/DeliverItem.md
+doc/DeliverRequest.md
 doc/DeliveryApi.md
 doc/DeliveryOrderItemOut.md
 doc/DeliveryOrderOut.md
 doc/DeliverySummaryOut.md
 doc/DetailOut.md
+doc/FailIn.md
 doc/HTTPValidationError.md
 doc/OTPRequest.md
 doc/OTPRequestResponse.md
@@ -28,6 +31,7 @@ doc/OrderTrackingOut.md
 doc/OrdersApi.md
 doc/OverrideIn.md
 doc/OverrideSavedOut.md
+doc/PODIn.md
 doc/PaymentCreate.md
 doc/PaymentCreateOut.md
 doc/PaymentVerify.md
@@ -43,6 +47,7 @@ doc/QuoteIn.md
 doc/QuoteLineOut.md
 doc/QuoteOut.md
 doc/RefreshRequest.md
+doc/RouteStopOut.md
 doc/ShipmentTrackOut.md
 doc/SubscriptionCreate.md
 doc/SubscriptionDetail.md
@@ -52,6 +57,7 @@ doc/SubscriptionOut.md
 doc/SubscriptionsApi.md
 doc/TokenPair.md
 doc/TrackingEventOut.md
+doc/UploadOut.md
 doc/UserOut.md
 doc/ValidationErrorItem.md
 doc/VariantOut.md
@@ -82,10 +88,13 @@ lib/src/model/cart_item_qty_in.dart
 lib/src/model/cart_line_out.dart
 lib/src/model/cart_out.dart
 lib/src/model/checkout_in.dart
+lib/src/model/deliver_item.dart
+lib/src/model/deliver_request.dart
 lib/src/model/delivery_order_item_out.dart
 lib/src/model/delivery_order_out.dart
 lib/src/model/delivery_summary_out.dart
 lib/src/model/detail_out.dart
+lib/src/model/fail_in.dart
 lib/src/model/http_validation_error.dart
 lib/src/model/order_create.dart
 lib/src/model/order_item_in.dart
@@ -103,6 +112,7 @@ lib/src/model/payment_verify.dart
 lib/src/model/payment_verify_out.dart
 lib/src/model/plan_line.dart
 lib/src/model/plan_out.dart
+lib/src/model/podin.dart
 lib/src/model/product_full_out.dart
 lib/src/model/product_out.dart
 lib/src/model/profile_out.dart
@@ -110,6 +120,7 @@ lib/src/model/quote_in.dart
 lib/src/model/quote_line_out.dart
 lib/src/model/quote_out.dart
 lib/src/model/refresh_request.dart
+lib/src/model/route_stop_out.dart
 lib/src/model/shipment_track_out.dart
 lib/src/model/subscription_create.dart
 lib/src/model/subscription_detail.dart
@@ -118,6 +129,7 @@ lib/src/model/subscription_item_out.dart
 lib/src/model/subscription_out.dart
 lib/src/model/token_pair.dart
 lib/src/model/tracking_event_out.dart
+lib/src/model/upload_out.dart
 lib/src/model/user_out.dart
 lib/src/model/validation_error_item.dart
 lib/src/model/variant_out.dart
