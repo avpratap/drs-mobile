@@ -84,9 +84,10 @@ void main() {
     await t.pumpAndSettle();
 
     // OTP screen: phone is masked, dev code offered (non-prod).
-    expect(find.text('Sent to +91 98•••••210'), findsOneWidget);
-    expect(find.text('Dev code: 123456'), findsOneWidget);
-    await t.tap(find.text('Use'));
+    expect(find.text('Code sent to +91 98•••••210'), findsOneWidget);
+    await t.tap(find.text('Use dev code 123456'));
+    await t.pump();
+    await t.tap(find.text('Verify & continue'));
     await t.pumpAndSettle();
 
     // Signed in → Home tab with greeting and milk line first.

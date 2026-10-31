@@ -6,7 +6,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../features/account/presentation/account_screen.dart';
 import '../features/account/presentation/addresses_screen.dart';
 import '../features/auth/application/auth_controller.dart';
-import '../features/auth/presentation/otp_screen.dart';
 import '../features/auth/presentation/sign_in_screen.dart';
 import '../features/cart/presentation/cart_screen.dart';
 import '../features/catalogue/presentation/home_screen.dart';
@@ -51,18 +50,7 @@ GoRouter appRouter(Ref ref) {
     },
     routes: [
       GoRoute(path: Routes.splash, builder: (_, _) => const SplashScreen()),
-      GoRoute(
-        path: Routes.signIn,
-        builder: (_, _) => const SignInScreen(),
-        routes: [
-          GoRoute(
-            path: 'otp',
-            redirect: (_, state) =>
-                state.extra is OtpArgs ? null : Routes.signIn,
-            builder: (_, state) => OtpScreen(args: state.extra! as OtpArgs),
-          ),
-        ],
-      ),
+      GoRoute(path: Routes.signIn, builder: (_, _) => const SignInScreen()),
       GoRoute(
         path: '/product/:id',
         builder: (_, s) =>
