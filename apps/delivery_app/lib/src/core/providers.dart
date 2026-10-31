@@ -1,6 +1,8 @@
 import 'package:drs_api/drs_api.dart';
 import 'package:drs_api/drs_api_session.dart';
 import 'package:drs_core/drs_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show appFlavor;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/delivery_database.dart';
@@ -11,7 +13,10 @@ import 'session_events.dart';
 part 'providers.g.dart';
 
 @Riverpod(keepAlive: true)
-DrsEnv env(Ref ref) => DrsEnv.fromEnvironment();
+DrsEnv env(Ref ref) => DrsEnv.fromEnvironment(
+  appFlavor: appFlavor,
+  ios: defaultTargetPlatform == TargetPlatform.iOS,
+);
 
 @Riverpod(keepAlive: true)
 TokenStore tokenStore(Ref ref) => SecureTokenStore();

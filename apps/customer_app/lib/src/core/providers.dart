@@ -1,6 +1,8 @@
 import 'package:drs_api/drs_api.dart';
 import 'package:drs_api/drs_api_session.dart';
 import 'package:drs_core/drs_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show appFlavor;
 import 'package:hooks_riverpod/hooks_riverpod.dart' show Provider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -15,7 +17,10 @@ final clockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 
 /// Compile-time config (`--dart-define`). Override in tests.
 @Riverpod(keepAlive: true)
-DrsEnv env(Ref ref) => DrsEnv.fromEnvironment();
+DrsEnv env(Ref ref) => DrsEnv.fromEnvironment(
+  appFlavor: appFlavor,
+  ios: defaultTargetPlatform == TargetPlatform.iOS,
+);
 
 @Riverpod(keepAlive: true)
 TokenStore tokenStore(Ref ref) => SecureTokenStore();
