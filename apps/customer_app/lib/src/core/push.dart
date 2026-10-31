@@ -53,9 +53,6 @@ List<Override> pushOverrides({PushPlatform? platform, PushPrefs? prefs}) => [
     );
   }),
   pushRouteResolverProvider.overrideWithValue(customerPushRoute),
-  pushSignedInProvider.overrideWith(
-    (ref) => ref.watch(authControllerProvider).value is SignedIn,
-  ),
 ];
 
 /// Starts the notifications service and opens tapped notifications once a
@@ -73,14 +70,17 @@ class _PushBridgeState extends ConsumerState<PushBridge> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => ref.read(notificationsControllerProvider.notifier).start(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final c = ref.read(notificationsControllerProvider.notifier);
+      await c.setSignedIn(ref.read(authControllerProvider).value is SignedIn);
+      await c.start();
+    });
   }
 
   void _openPending() {
-    final route = ref.read(notificationsControllerProvider).pendingRoute;
-    if (route == null || !ref.read(pushSignedInProvider)) return;
+    final s = ref.read(notificationsControllerProvider);
+    final route = s.pendingRoute;
+    if (route == null || !s.signedIn) return;
     ref.read(notificationsControllerProvider.notifier).consumeRoute();
     if (route.isNotEmpty) ref.read(appRouterProvider).go(route);
   }
@@ -92,7 +92,17 @@ class _PushBridgeState extends ConsumerState<PushBridge> {
         notificationsControllerProvider.select((s) => s.pendingRoute),
         (_, _) => _openPending(),
       )
-      ..listen(pushSignedInProvider, (_, _) => _openPending());
+      // Report the session to the shared service (it doesn't watch auth).
+      ..listen(
+        authControllerProvider.select((a) => a.value is SignedIn),
+        (_, signedIn) => ref
+            .read(notificationsControllerProvider.notifier)
+            .setSignedIn(signedIn),
+      )
+      ..listen(
+        notificationsControllerProvider.select((s) => s.signedIn),
+        (_, _) => _openPending(),
+      );
     return widget.child;
   }
 }

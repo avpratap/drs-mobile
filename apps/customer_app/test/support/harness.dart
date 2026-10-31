@@ -1,11 +1,13 @@
 import 'package:customer_app/src/app.dart';
 import 'package:customer_app/src/core/providers.dart';
+import 'package:customer_app/src/core/push.dart';
 import 'package:customer_app/src/data/local/app_database.dart';
 import 'package:customer_app/src/features/checkout/application/checkout_controller.dart';
 import 'package:customer_app/src/features/checkout/application/payment_gateway.dart';
 import 'package:drift/native.dart';
 import 'package:drs_api/drs_api_session.dart';
 import 'package:drs_core/drs_core.dart';
+import 'package:drs_ui/testing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,16 +54,28 @@ class FakeGateway implements PaymentGateway {
 }
 
 class Harness {
-  Harness({FakeDrsServer? server, this.env, this.gateway})
-    : server = server ?? FakeDrsServer();
+  Harness({
+    FakeDrsServer? server,
+    this.env,
+    this.gateway,
+    this.push,
+    bool signedIn = true,
+  }) : server = server ?? FakeDrsServer(),
+       tokens = InMemoryTokenStore(
+         signedIn
+             ? const SessionTokens(accessToken: 'a', refreshToken: 'r')
+             : null,
+       );
 
   final FakeDrsServer server;
   final DrsEnv? env;
   final PaymentGateway? gateway;
   final db = AppDatabase(NativeDatabase.memory());
-  final tokens = InMemoryTokenStore(
-    const SessionTokens(accessToken: 'a', refreshToken: 'r'),
-  );
+  final InMemoryTokenStore tokens;
+
+  /// When set, the shared notifications service runs on this fake platform.
+  final FakePushPlatform? push;
+  final pushPrefs = InMemoryPushPrefs();
 
   Widget app() => ProviderScope(
     retry: (_, _) => null,
@@ -70,6 +84,8 @@ class Harness {
         env ?? const DrsEnv(flavor: DrsFlavor.dev, apiBaseUrl: 'http://test'),
       ),
       tokenStoreProvider.overrideWithValue(tokens),
+      // Fixed 8 am so time-of-day UI (greeting) is deterministic in goldens.
+      clockProvider.overrideWithValue(() => DateTime(2026, 11, 1, 8)),
       appDatabaseProvider.overrideWithValue(db),
       drsApiProvider.overrideWithValue(
         buildDrsApi(
@@ -79,6 +95,7 @@ class Harness {
         ),
       ),
       if (gateway != null) paymentGatewayProvider.overrideWithValue(gateway!),
+      if (push != null) ...pushOverrides(platform: push, prefs: pushPrefs),
     ],
     child: const CustomerApp(),
   );

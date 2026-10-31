@@ -1,5 +1,6 @@
 import 'package:delivery_app/src/app.dart';
 import 'package:delivery_app/src/core/providers.dart';
+import 'package:delivery_app/src/core/push.dart';
 import 'package:delivery_app/src/data/delivery_database.dart';
 import 'package:delivery_app/src/data/pod_files.dart';
 import 'package:delivery_app/src/features/route/route_providers.dart';
@@ -10,6 +11,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:drs_api/drs_api_session.dart';
 import 'package:drs_core/drs_core.dart';
+import 'package:drs_ui/testing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,12 +55,20 @@ class FakeCamera implements PodCamera {
 }
 
 class Harness {
-  Harness({FakeDeliveryServer? server, this.signedIn = true, this.env})
-    : server = server ?? FakeDeliveryServer();
+  Harness({
+    FakeDeliveryServer? server,
+    this.signedIn = true,
+    this.env,
+    this.push,
+  }) : server = server ?? FakeDeliveryServer();
 
   final FakeDeliveryServer server;
   final bool signedIn;
   final DrsEnv? env;
+
+  /// When set, the shared notifications service runs on this fake platform.
+  final FakePushPlatform? push;
+  final pushPrefs = InMemoryPushPrefs();
   final db = DeliveryDatabase(NativeDatabase.memory());
   final files = FakePodFiles();
   final camera = FakeCamera();
@@ -94,6 +104,7 @@ class Harness {
       }),
       autoSyncProvider.overrideWithValue(false),
       routeDayProvider.overrideWithValue(DateTime.utc(2026, 11, 1)),
+      if (push != null) ...pushOverrides(platform: push, prefs: pushPrefs),
     ],
     child: const DeliveryApp(),
   );

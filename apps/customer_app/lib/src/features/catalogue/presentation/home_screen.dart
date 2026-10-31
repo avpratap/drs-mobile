@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../core/providers.dart';
 import '../../../core/push.dart';
 import '../../../routing/routes.dart';
 import '../../auth/application/auth_controller.dart';
@@ -46,7 +47,7 @@ class HomeScreen extends ConsumerWidget {
                 sliver: SliverList.list(
                   children: [
                     Text(
-                      '${_greeting(DateTime.now())}, '
+                      '${_greeting(ref.watch(clockProvider)())}, '
                       "${account?.greetingName ?? 'there'}",
                       style: theme.textTheme.headlineSmall,
                     ),
