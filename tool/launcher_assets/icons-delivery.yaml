@@ -1,0 +1,9 @@
+# Prod (and un-flavored) icons -> android/app/src/main/res + ios AppIcon.
+flutter_launcher_icons:
+  image_path: "branding/delivery/icon.png"
+  android: "ic_launcher"
+  ios: true
+  remove_alpha_ios: true
+  adaptive_icon_background: "#0D4C3C"
+  adaptive_icon_foreground: "branding/delivery/foreground.png"
+  adaptive_icon_monochrome: "branding/delivery/monochrome.png"

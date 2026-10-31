@@ -35,4 +35,6 @@ dev_dependencies:
   riverpod_generator: ^4.0.9
 
 flutter:
+  # `flutter run` / `flutter build` without --flavor build the dev flavor.
+  default-flavor: dev
   uses-material-design: true

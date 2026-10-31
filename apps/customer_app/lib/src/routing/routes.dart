@@ -25,4 +25,6 @@ abstract final class Routes {
   static const addresses = '/account/addresses';
   static const profile = '/account/profile';
   static const notificationPrefs = '/account/notifications';
+  static const about = '/account/about';
+  static const privacyNotice = '/account/about/privacy';
 }

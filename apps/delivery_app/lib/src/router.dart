@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'auth/rider_auth.dart';
+import 'features/about/about_screens.dart';
 import 'features/login_screen.dart';
 import 'features/map/map_screen.dart';
 import 'features/route/today_screen.dart';
@@ -49,6 +50,16 @@ GoRouter router(Ref ref) {
         builder: (_, _) => const TodayScreen(),
         routes: [
           GoRoute(path: 'map', builder: (_, _) => const MapScreen()),
+          GoRoute(
+            path: 'about',
+            builder: (_, _) => const AboutScreen(),
+            routes: [
+              GoRoute(
+                path: 'privacy',
+                builder: (_, _) => const PrivacyNoticeScreen(),
+              ),
+            ],
+          ),
           GoRoute(
             path: 'stop/:id',
             builder: (_, s) =>

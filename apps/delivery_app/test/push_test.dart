@@ -96,7 +96,9 @@ void main() {
       await h.start(t);
       await t.tap(find.text('Allow notifications'));
       await t.pumpAndSettle();
-      await t.tap(find.byTooltip('Log out'));
+      await t.tap(find.byTooltip('More'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Log out'));
       await t.pumpAndSettle();
       await t.tap(find.text('Log out').last);
       await t.pumpAndSettle();

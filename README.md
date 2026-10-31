@@ -35,8 +35,10 @@ Run an app against a local backend (`uvicorn app.main:app` in drs-backend):
 ```bash
 cp env/dev.example.json env/dev.json   # git-ignored; fill in what you need
 cd apps/customer_app
-flutter run --dart-define-from-file=../../env/dev.json
+flutter run --flavor dev --dart-define-from-file=../../env/dev.json
 ```
+
+Or against the deployed backend: `flutter run --flavor dev --dart-define=DRS_API=live`.
 
 ## Platforms
 
@@ -44,11 +46,11 @@ Both apps target **Android and iOS**.
 
 | | customer_app | delivery_app |
 |---|---|---|
-| Android `applicationId` | `in.drsdairy.customer` | `in.drsdairy.delivery` |
-| iOS bundle id | `in.drsdairy.customer` | `in.drsdairy.delivery` |
+| Android `applicationId` / iOS bundle id (prod) | `in.drsdairy.customer` | `in.drsdairy.delivery` |
+| … dev flavor | `in.drsdairy.customer.dev` | `in.drsdairy.delivery.dev` |
 | Android SDK | min 24 (7.0) · target 36 · compile 36 | same |
 | iOS minimum | 15.0 (Xcode project + Podfile) | same |
-| Display name | DRS | DRS Delivery |
+| Display name (prod / dev) | DRS Dairy / DRS Dev | DRS Delivery / Delivery Dev |
 
 Kotlin treats `in` as a keyword, so `MainActivity.kt` uses
 ``package `in`.drsdairy.…``; Gradle `namespace`/`applicationId` need no escaping.
@@ -91,11 +93,17 @@ need a missing key stay disabled.
 
 | Define | Purpose |
 |---|---|
-| `DRS_ENV` | `dev` (default) · `staging` · `prod` — prod hides the dev-OTP hint and requires `https` |
-| `DRS_API_BASE_URL` | Backend origin. Default `http://10.0.2.2:8000` (Android emulator → host) |
+| `DRS_ENV` | `dev` · `staging` · `prod` — defaults to the build flavor; prod hides the dev-OTP hint and requires `https` |
+| `DRS_API` | Named backend: `dev` (local) or `live` (`https://drs-backend-zvb1.onrender.com`). Default: `live` for the prod flavor, `dev` otherwise |
+| `DRS_API_BASE_URL` | Explicit backend origin; overrides `DRS_API` |
 | `DRS_RAZORPAY_KEY_ID` | Razorpay **publishable** key id (checkout milestone) |
 | `DRS_FCM_SENDER_ID`, `DRS_FIREBASE_API_KEY`, `DRS_FIREBASE_PROJECT_ID`, `DRS_FIREBASE_APP_ID_ANDROID`, `DRS_FIREBASE_APP_ID_IOS` | Push notifications (FCM). All must be set or push stays disabled — see [docs/PUSH_NOTIFICATIONS.md](docs/PUSH_NOTIFICATIONS.md) |
 | `DRS_GOOGLE_MAPS_API_KEY` | Maps (delivery app). Android also reads it from the `DRS_GOOGLE_MAPS_API_KEY` env var / Gradle property into a manifest placeholder |
+| `DRS_PRIVACY_URL`, `DRS_GRIEVANCE_EMAIL` | Privacy notice link and DPDP grievance contact (About screen) |
+
+Builds come in two flavors, `dev` (default) and `prod`, with their own app
+ids, names and icons. Flavors, backends, signing and store builds are
+covered in [docs/RELEASE.md](docs/RELEASE.md).
 
 `env/*.json` (except `*.example.json`), `google-services.json`,
 `GoogleService-Info.plist`, keystores and `key.properties` are git-ignored.
@@ -148,5 +156,6 @@ immediately; CI fails if they are stale.
 `.github/workflows/ci.yaml`:
 
 1. bootstrap → codegen-is-fresh check → analyze → test (Ubuntu)
-2. `flutter build apk --debug` for both apps (Ubuntu runner with the Android SDK; APKs uploaded as artifacts)
-3. `flutter build ios --debug --no-codesign` for both apps (macOS runner with Xcode)
+2. Android, both apps: `dev` debug APK (uploaded as an artifact) and `prod`
+   release app bundle (debug-signed in CI — no keystore)
+3. iOS, both apps: `dev` debug and `prod` release, `--no-codesign` (macOS)

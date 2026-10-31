@@ -38,6 +38,9 @@ final screens = <(String, String)>[
   (Routes.notificationPrefs, 'This device'),
   (Routes.productReviews(2), 'Most helpful'),
   (Routes.writeReview(2), 'Your rating'),
+  // Milestone 6.
+  (Routes.about, 'Version 1.0.0 (12)'),
+  (Routes.privacyNotice, 'What we collect'),
 ];
 
 void main() {

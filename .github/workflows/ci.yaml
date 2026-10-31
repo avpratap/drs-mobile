@@ -43,7 +43,7 @@ jobs:
         run: melos run test
 
   build-android:
-    name: Android debug APK (${{ matrix.app }})
+    name: Android ${{ matrix.target.flavor }} ${{ matrix.target.mode }} (${{ matrix.app }})
     needs: analyze-and-test
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -51,6 +51,11 @@ jobs:
       fail-fast: false
       matrix:
         app: [customer_app, delivery_app]
+        # dev debug APK for testers; prod release bundle proves the store
+        # configuration (flavor, R8, signing fallback) builds.
+        target:
+          - { flavor: dev, mode: debug }
+          - { flavor: prod, mode: release }
     steps:
       - uses: actions/checkout@v4
 
@@ -66,19 +71,26 @@ jobs:
           flutter-version: 3.47.9
           cache: true
 
-      - name: Build debug APK
+      - name: Build dev debug APK
+        if: matrix.target.mode == 'debug'
         working-directory: apps/${{ matrix.app }}
-        # No secrets needed: every --dart-define defaults to empty / dev.
-        run: flutter build apk --debug
+        # No secrets needed: every --dart-define defaults to empty.
+        run: flutter build apk --debug --flavor ${{ matrix.target.flavor }}
+
+      - name: Build prod release app bundle (no keystore -> debug-signed)
+        if: matrix.target.mode == 'release'
+        working-directory: apps/${{ matrix.app }}
+        run: flutter build appbundle --release --flavor ${{ matrix.target.flavor }}
 
       - uses: actions/upload-artifact@v4
+        if: matrix.target.mode == 'debug'
         with:
-          name: ${{ matrix.app }}-debug-apk
-          path: apps/${{ matrix.app }}/build/app/outputs/flutter-apk/app-debug.apk
+          name: ${{ matrix.app }}-${{ matrix.target.flavor }}-debug-apk
+          path: apps/${{ matrix.app }}/build/app/outputs/flutter-apk/app-${{ matrix.target.flavor }}-debug.apk
           retention-days: 7
 
   build-ios:
-    name: iOS build, no codesign (${{ matrix.app }})
+    name: iOS ${{ matrix.target.flavor }} ${{ matrix.target.mode }}, no codesign (${{ matrix.app }})
     needs: analyze-and-test
     runs-on: macos-latest
     timeout-minutes: 60
@@ -86,6 +98,9 @@ jobs:
       fail-fast: false
       matrix:
         app: [customer_app, delivery_app]
+        target:
+          - { flavor: dev, mode: debug }
+          - { flavor: prod, mode: release }
     steps:
       - uses: actions/checkout@v4
 
@@ -95,6 +110,8 @@ jobs:
           flutter-version: 3.47.9
           cache: true
 
-      - name: Build iOS (simulator-independent, unsigned)
+      - name: Build iOS (unsigned)
         working-directory: apps/${{ matrix.app }}
-        run: flutter build ios --debug --no-codesign
+        run: >-
+          flutter build ios --${{ matrix.target.mode }} --no-codesign
+          --flavor ${{ matrix.target.flavor }}

@@ -96,6 +96,44 @@ void main() {
       expect(env.validate(), isEmpty);
     });
 
+    test('live backend by name; prod flavor defaults to live', () {
+      expect(
+        DrsEnv.resolve(api: 'live').apiBaseUrl,
+        'https://drs-backend-zvb1.onrender.com',
+      );
+      final prod = DrsEnv.resolve(appFlavor: 'prod');
+      expect(prod.flavor, DrsFlavor.prod);
+      expect(prod.backend, DrsBackend.live);
+      expect(prod.validate(), isEmpty);
+      // dev flavor (and no flavor) stays local unless asked.
+      expect(DrsEnv.resolve(appFlavor: 'dev').backend, DrsBackend.dev);
+      expect(DrsEnv.resolve().backend, DrsBackend.dev);
+      expect(DrsEnv.resolve(ios: true).apiBaseUrl, 'http://localhost:8000');
+      // A prod flavor can still be pointed at a local backend for testing,
+      // but then fails validation (prod needs https).
+      expect(
+        DrsEnv.resolve(appFlavor: 'prod', api: 'dev').validate(),
+        isNotEmpty,
+      );
+    });
+
+    test('explicit base URL and DRS_ENV win', () {
+      final env = DrsEnv.resolve(
+        env: 'staging',
+        api: 'live',
+        baseUrl: 'https://staging.example.in',
+        appFlavor: 'prod',
+      );
+      expect(env.flavor, DrsFlavor.staging);
+      expect(env.backend, DrsBackend.custom);
+      expect(env.apiBaseUrl, 'https://staging.example.in');
+    });
+
+    test('toString never includes key material', () {
+      final env = DrsEnv.resolve(razorpayKeyId: 'rzp_test_SECRETISH');
+      expect(env.toString(), isNot(contains('SECRETISH')));
+    });
+
     test('prod requires https', () {
       const env = DrsEnv(flavor: DrsFlavor.prod, apiBaseUrl: 'http://x.in');
       expect(env.validate(), isNotEmpty);

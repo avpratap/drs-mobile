@@ -2,6 +2,7 @@
 /// set of on-brand widgets.
 library;
 
+export 'src/legal/drs_legal.dart';
 export 'src/notifications/firebase_push_platform.dart';
 export 'src/notifications/notifications_controller.dart';
 export 'src/notifications/push_platform.dart';

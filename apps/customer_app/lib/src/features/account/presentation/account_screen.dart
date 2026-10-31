@@ -71,10 +71,17 @@ class AccountScreen extends HookConsumerWidget {
               subtitle: 'This device and what we send',
               route: Routes.notificationPrefs,
             ),
-            const _ComingSoonTile(
+            const _NavTile(
               icon: Icons.privacy_tip_outlined,
-              title: 'Privacy & data',
-              subtitle: 'Export or erase your data',
+              title: 'Privacy notice',
+              subtitle: 'What we collect, why, and your rights',
+              route: Routes.privacyNotice,
+            ),
+            const _NavTile(
+              icon: Icons.info_outline,
+              title: 'About',
+              subtitle: 'Version, licences',
+              route: Routes.about,
             ),
             const SizedBox(height: DrsSpacing.lg),
             DrsButton.secondary(
@@ -122,25 +129,5 @@ class _NavTile extends StatelessWidget {
     subtitle: Text(subtitle),
     trailing: const Icon(Icons.chevron_right),
     onTap: () => context.push(route),
-  );
-}
-
-class _ComingSoonTile extends StatelessWidget {
-  const _ComingSoonTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-
-  @override
-  Widget build(BuildContext context) => ListTile(
-    leading: Icon(icon),
-    title: Text(title),
-    subtitle: Text(subtitle ?? 'Coming soon'),
-    enabled: false,
   );
 }

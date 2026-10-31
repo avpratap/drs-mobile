@@ -24,6 +24,12 @@ coverage/
 **/ios/Runner/GoogleService-Info.plist
 *.jks
 *.keystore
+# iOS signing material / filled-in export options
+**/ios/ExportOptions.plist
+*.mobileprovision
+*.p12
+*.cer
+AuthKey_*.p8
 env/*.json
 !env/*.example.json
 

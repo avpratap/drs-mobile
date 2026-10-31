@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../features/about/about_screens.dart';
 import '../features/account/presentation/account_screen.dart';
 import '../features/account/presentation/addresses_screen.dart';
 import '../features/account/presentation/notification_prefs_screen.dart';
@@ -162,6 +163,16 @@ GoRouter appRouter(Ref ref) {
                   GoRoute(
                     path: 'notifications',
                     builder: (_, _) => const NotificationPrefsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'about',
+                    builder: (_, _) => const AboutScreen(),
+                    routes: [
+                      GoRoute(
+                        path: 'privacy',
+                        builder: (_, _) => const PrivacyNoticeScreen(),
+                      ),
+                    ],
                   ),
                 ],
               ),

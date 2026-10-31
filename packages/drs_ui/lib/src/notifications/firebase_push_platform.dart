@@ -5,6 +5,7 @@ import 'package:drs_core/drs_core.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show appFlavor;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'push_platform.dart';
@@ -29,7 +30,10 @@ bool get _isIos => defaultTargetPlatform == TargetPlatform.iOS;
 /// top-level function.
 @pragma('vm:entry-point')
 Future<void> drsPushBackgroundHandler(RemoteMessage message) async {
-  final options = drsFirebaseOptions(DrsEnv.fromEnvironment(), ios: _isIos);
+  final options = drsFirebaseOptions(
+    DrsEnv.fromEnvironment(appFlavor: appFlavor, ios: _isIos),
+    ios: _isIos,
+  );
   if (options != null && Firebase.apps.isEmpty) {
     await Firebase.initializeApp(options: options);
   }

@@ -1,5 +1,17 @@
 import 'package:meta/meta.dart';
 
+/// Which backend the app talks to.
+enum DrsBackend {
+  /// A backend on the developer's machine.
+  dev,
+
+  /// The deployed backend ([DrsEnv.liveBaseUrl]).
+  live,
+
+  /// An explicit `DRS_API_BASE_URL`.
+  custom,
+}
+
 /// Deployment flavour, from `--dart-define=DRS_ENV=dev|staging|prod`.
 enum DrsFlavor {
   dev,
@@ -20,8 +32,12 @@ enum DrsFlavor {
 ///
 /// | define                  | purpose                                         |
 /// |-------------------------|-------------------------------------------------|
-/// | `DRS_ENV`               | `dev` (default) / `staging` / `prod`            |
-/// | `DRS_API_BASE_URL`      | FastAPI origin, e.g. `https://api.example.com`  |
+/// | `DRS_ENV`               | `dev` / `staging` / `prod`; defaults to the     |
+/// |                         | build flavor (`--flavor dev|prod`), else `dev`  |
+/// | `DRS_API`               | named backend: `dev` (local) or `live` (the     |
+/// |                         | deployed backend). Default: `live` for the prod |
+/// |                         | flavor, `dev` otherwise                         |
+/// | `DRS_API_BASE_URL`      | explicit origin; overrides `DRS_API`            |
 /// | `DRS_RAZORPAY_KEY_ID`   | Razorpay *publishable* key id                   |
 /// | `DRS_FCM_SENDER_ID`     | Firebase Cloud Messaging sender id              |
 /// | `DRS_FIREBASE_API_KEY`  | Firebase API key (restricted, per platform)     |
@@ -40,32 +56,97 @@ class DrsEnv {
     this.firebaseProjectId = '',
     this.firebaseAppIdAndroid = '',
     this.firebaseAppIdIos = '',
+    this.backend = DrsBackend.custom,
+    this.privacyPolicyUrl = '',
+    this.grievanceEmail = '',
   });
 
   /// Reads the values compiled in via `--dart-define`.
-  factory DrsEnv.fromEnvironment() {
-    const flavor = String.fromEnvironment('DRS_ENV', defaultValue: 'dev');
-    const baseUrl = String.fromEnvironment('DRS_API_BASE_URL');
-    final parsed = DrsFlavor.parse(flavor);
+  ///
+  /// [appFlavor] is the native build flavor (`appFlavor` from
+  /// `package:flutter/services.dart`), [ios] picks the local dev host the
+  /// simulator can reach.
+  factory DrsEnv.fromEnvironment({
+    String? appFlavor,
+    bool ios = false,
+  }) => DrsEnv.resolve(
+    env: const String.fromEnvironment('DRS_ENV'),
+    api: const String.fromEnvironment('DRS_API'),
+    baseUrl: const String.fromEnvironment('DRS_API_BASE_URL'),
+    appFlavor: appFlavor,
+    ios: ios,
+    razorpayKeyId: const String.fromEnvironment('DRS_RAZORPAY_KEY_ID'),
+    fcmSenderId: const String.fromEnvironment('DRS_FCM_SENDER_ID'),
+    googleMapsApiKey: const String.fromEnvironment('DRS_GOOGLE_MAPS_API_KEY'),
+    firebaseApiKey: const String.fromEnvironment('DRS_FIREBASE_API_KEY'),
+    firebaseProjectId: const String.fromEnvironment('DRS_FIREBASE_PROJECT_ID'),
+    firebaseAppIdAndroid: const String.fromEnvironment(
+      'DRS_FIREBASE_APP_ID_ANDROID',
+    ),
+    firebaseAppIdIos: const String.fromEnvironment('DRS_FIREBASE_APP_ID_IOS'),
+    privacyPolicyUrl: const String.fromEnvironment('DRS_PRIVACY_URL'),
+    grievanceEmail: const String.fromEnvironment('DRS_GRIEVANCE_EMAIL'),
+  );
+
+  /// Pure resolution of the raw defines (testable without `--dart-define`).
+  factory DrsEnv.resolve({
+    String env = '',
+    String api = '',
+    String baseUrl = '',
+    String? appFlavor,
+    bool ios = false,
+    String razorpayKeyId = '',
+    String fcmSenderId = '',
+    String googleMapsApiKey = '',
+    String firebaseApiKey = '',
+    String firebaseProjectId = '',
+    String firebaseAppIdAndroid = '',
+    String firebaseAppIdIos = '',
+    String privacyPolicyUrl = '',
+    String grievanceEmail = '',
+  }) {
+    final flavor = DrsFlavor.parse(
+      env.trim().isNotEmpty ? env : (appFlavor ?? ''),
+    );
+    final DrsBackend backend;
+    final String url;
+    if (baseUrl.trim().isNotEmpty) {
+      backend = DrsBackend.custom;
+      url = baseUrl.trim();
+    } else {
+      backend = switch (api.trim().toLowerCase()) {
+        'live' || 'prod' || 'production' => DrsBackend.live,
+        'dev' || 'local' => DrsBackend.dev,
+        _ => flavor == DrsFlavor.prod ? DrsBackend.live : DrsBackend.dev,
+      };
+      url = backend == DrsBackend.live
+          ? liveBaseUrl
+          : (ios ? defaultIosDevBaseUrl : defaultDevBaseUrl);
+    }
     return DrsEnv(
-      flavor: parsed,
-      // Android emulator reaches the host's localhost via 10.0.2.2.
-      apiBaseUrl: baseUrl.isNotEmpty ? baseUrl : defaultDevBaseUrl,
-      razorpayKeyId: const String.fromEnvironment('DRS_RAZORPAY_KEY_ID'),
-      fcmSenderId: const String.fromEnvironment('DRS_FCM_SENDER_ID'),
-      googleMapsApiKey: const String.fromEnvironment('DRS_GOOGLE_MAPS_API_KEY'),
-      firebaseApiKey: const String.fromEnvironment('DRS_FIREBASE_API_KEY'),
-      firebaseProjectId: const String.fromEnvironment(
-        'DRS_FIREBASE_PROJECT_ID',
-      ),
-      firebaseAppIdAndroid: const String.fromEnvironment(
-        'DRS_FIREBASE_APP_ID_ANDROID',
-      ),
-      firebaseAppIdIos: const String.fromEnvironment('DRS_FIREBASE_APP_ID_IOS'),
+      flavor: flavor,
+      apiBaseUrl: url,
+      backend: backend,
+      razorpayKeyId: razorpayKeyId,
+      fcmSenderId: fcmSenderId,
+      googleMapsApiKey: googleMapsApiKey,
+      firebaseApiKey: firebaseApiKey,
+      firebaseProjectId: firebaseProjectId,
+      firebaseAppIdAndroid: firebaseAppIdAndroid,
+      firebaseAppIdIos: firebaseAppIdIos,
+      privacyPolicyUrl: privacyPolicyUrl,
+      grievanceEmail: grievanceEmail,
     );
   }
 
+  /// Local backend from the Android emulator (host's localhost).
   static const defaultDevBaseUrl = 'http://10.0.2.2:8000';
+
+  /// Local backend from the iOS simulator.
+  static const defaultIosDevBaseUrl = 'http://localhost:8000';
+
+  /// The deployed DRS backend (`DRS_API=live`). Public origin, not a secret.
+  static const liveBaseUrl = 'https://drs-backend-zvb1.onrender.com';
 
   final DrsFlavor flavor;
   final String apiBaseUrl;
@@ -76,6 +157,15 @@ class DrsEnv {
   final String firebaseProjectId;
   final String firebaseAppIdAndroid;
   final String firebaseAppIdIos;
+
+  /// Which backend [apiBaseUrl] points at (shown on the About screen).
+  final DrsBackend backend;
+
+  /// Full privacy notice (DPDP) web page; '' = in-app summary only.
+  final String privacyPolicyUrl;
+
+  /// Grievance officer contact (DPDP s.8(10)); '' = shown as "in the app".
+  final String grievanceEmail;
 
   bool get isProd => flavor == DrsFlavor.prod;
 
@@ -115,7 +205,8 @@ class DrsEnv {
   @override
   String toString() =>
       // Never print key material — only whether it is configured.
-      'DrsEnv(flavor: ${flavor.name}, apiBaseUrl: $apiBaseUrl, '
+      'DrsEnv(flavor: ${flavor.name}, backend: ${backend.name}, '
+      'apiBaseUrl: $apiBaseUrl, '
       'razorpay: $hasRazorpay, fcm: $hasFcm, maps: $hasGoogleMaps, '
       'firebase: ${firebaseProjectId.isNotEmpty})';
 }
