@@ -123,17 +123,25 @@ Future<void> main(List<String> args) async {
     () async => (await public.getProductsApi().listProducts()).data!,
     info: (p) => '${p.length} products',
   );
-  if (products != null && products.isNotEmpty) {
-    final id = products.first.id;
+  await step(
+    'catalogue: list categories',
+    () async => (await public.getProductsApi().listProductCategories()).data!,
+    // Category names/slugs are public catalogue data.
+    info: (c) => '${c.length}: ${c.join(', ')}',
+  );
+  // Every product through the typed decoders (catches contract drift that
+  // only some catalogue rows trigger).
+  for (final p in products ?? const <ProductOut>[]) {
     await step(
-      'catalogue: product detail',
+      'catalogue: product ${p.id} detail',
       () async =>
-          (await public.getProductsApi().getProductFull(productId: id)).data!,
+          (await public.getProductsApi().getProductFull(productId: p.id)).data!,
+      info: (d) => '${d.variants?.length ?? 0} pack sizes',
     );
     await step(
-      'reviews: list ratings',
+      'reviews: product ${p.id} ratings',
       () async =>
-          (await public.getReviewsApi().listProductRatings(productId: id))
+          (await public.getReviewsApi().listProductRatings(productId: p.id))
               .data!,
       info: (r) => '${r.count} approved',
     );
@@ -192,6 +200,10 @@ Future<void> main(List<String> args) async {
         'rider: today\'s route',
         () async => (await api.getDeliveryApi().deliveryRoute()).data!,
         info: (r) => '${r.length} stops',
+      );
+      await step(
+        'rider: today\'s summary',
+        () async => (await api.getDeliveryApi().deliverySummary()).data!,
       );
       await signOut(api, tokens, 'rider');
     }
