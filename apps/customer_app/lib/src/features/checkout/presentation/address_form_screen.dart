@@ -8,59 +8,86 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../account/application/account_providers.dart';
 import '../application/checkout_controller.dart';
 
-/// Add a delivery address. Pops with the created [Address].
+/// Add a delivery address, or edit [initial]. Pops with the saved [Address].
 class AddressFormScreen extends HookConsumerWidget {
-  const AddressFormScreen({super.key});
+  const AddressFormScreen({super.key, this.initial});
+
+  final Address? initial;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final a = initial;
     final form = useMemoized(GlobalKey<FormState>.new);
-    final label = useTextEditingController(text: 'Home');
-    final name = useTextEditingController();
-    final phone = useTextEditingController();
-    final line1 = useTextEditingController();
-    final line2 = useTextEditingController();
-    final landmark = useTextEditingController();
-    final city = useTextEditingController();
-    final pincode = useTextEditingController();
-    final state = useState<String?>(null);
-    final makeDefault = useState(true);
+    final label = useTextEditingController(text: a?.label ?? 'Home');
+    final name = useTextEditingController(text: a?.contactName ?? '');
+    final phone = useTextEditingController(
+      text: a?.contactPhone == null
+          ? ''
+          : a!.contactPhone!.replaceFirst(RegExp(r'^\+91'), ''),
+    );
+    final line1 = useTextEditingController(text: a?.line1 ?? '');
+    final line2 = useTextEditingController(text: a?.line2 ?? '');
+    final landmark = useTextEditingController(text: a?.landmark ?? '');
+    final city = useTextEditingController(text: a?.city ?? '');
+    final pincode = useTextEditingController(text: a?.pincode ?? '');
+    final state = useState<String?>(
+      IndianStates.all.contains(a?.state) ? a!.state : null,
+    );
+    final makeDefault = useState(a == null || a.isDefault);
     final busy = useState(false);
     final error = useState<String?>(null);
 
     String? required(String? v) =>
         (v == null || v.trim().isEmpty) ? 'Required' : null;
+    String? opt(TextEditingController c) =>
+        c.text.trim().isEmpty ? null : c.text.trim();
 
     Future<void> save() async {
       if (!form.currentState!.validate()) return;
       busy.value = true;
       error.value = null;
+      final repo = ref.read(accountRepositoryProvider);
+      final phoneE164 = opt(phone) == null ? null : IndianPhone.normalize(phone.text);
       try {
-        final phoneE164 = phone.text.trim().isEmpty
-            ? null
-            : IndianPhone.normalize(phone.text);
-        final created = await ref
-            .read(checkoutRepositoryProvider)
-            .createAddress(
-              AddressIn(
-                label: label.text.trim().isEmpty ? null : label.text.trim(),
-                contactName: name.text.trim().isEmpty ? null : name.text.trim(),
-                contactPhone: phoneE164,
-                line1: line1.text.trim(),
-                line2: line2.text.trim().isEmpty ? null : line2.text.trim(),
-                landmark: landmark.text.trim().isEmpty
-                    ? null
-                    : landmark.text.trim(),
-                city: city.text.trim(),
-                state: state.value!,
-                pincode: pincode.text.trim(),
-                isDefault: makeDefault.value,
-              ),
-            );
+        final Address saved;
+        if (a == null) {
+          saved = await repo.createAddress(
+            AddressIn(
+              label: opt(label),
+              contactName: opt(name),
+              contactPhone: phoneE164,
+              line1: line1.text.trim(),
+              line2: opt(line2),
+              landmark: opt(landmark),
+              city: city.text.trim(),
+              state: state.value!,
+              pincode: pincode.text.trim(),
+              isDefault: makeDefault.value,
+            ),
+          );
+        } else {
+          // Edit: send every field so clearing one ("") is applied too.
+          saved = await repo.updateAddress(
+            a.id,
+            AddressUpdate(
+              label: label.text.trim(),
+              contactName: name.text.trim(),
+              contactPhone: phoneE164,
+              line1: line1.text.trim(),
+              line2: line2.text.trim(),
+              landmark: landmark.text.trim(),
+              city: city.text.trim(),
+              state: state.value!,
+              pincode: pincode.text.trim(),
+              isDefault: makeDefault.value ? true : null,
+            ),
+          );
+        }
         ref.invalidate(addressesProvider);
-        if (context.mounted) context.pop(created);
+        if (context.mounted) context.pop(saved);
       } on DrsApiError catch (e) {
         error.value = e.message;
       } finally {
@@ -73,7 +100,7 @@ class AddressFormScreen extends HookConsumerWidget {
     const gap = SizedBox(height: DrsSpacing.sm);
 
     return DrsScaffold(
-      appBar: const DrsAppBar(title: 'New address'),
+      appBar: DrsAppBar(title: a == null ? 'New address' : 'Edit address'),
       body: Form(
         key: form,
         child: AutofillGroup(
@@ -162,24 +189,23 @@ class AddressFormScreen extends HookConsumerWidget {
                 controller: label,
                 decoration: dec('Save as', hint: 'Home, Office…'),
               ),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Use as default address'),
-                value: makeDefault.value,
-                onChanged: (v) => makeDefault.value = v,
-              ),
+              if (a == null || !a.isDefault)
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Use as default address'),
+                  value: makeDefault.value,
+                  onChanged: (v) => makeDefault.value = v,
+                ),
               if (error.value != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: DrsSpacing.sm),
                   child: Text(
                     error.value!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ),
               DrsButton(
-                label: 'Save address',
+                label: a == null ? 'Save address' : 'Save changes',
                 expand: true,
                 isLoading: busy.value,
                 onPressed: save,

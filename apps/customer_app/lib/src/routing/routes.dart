@@ -11,6 +11,7 @@ abstract final class Routes {
   static const checkout = '/cart/checkout';
   static const payOrder = '/pay';
   static const newAddress = '/addresses/new';
+  static const editAddress = '/addresses/edit';
   static String product(int id) => '/product/$id';
 
   // Inside tabs (keep the navigation bar).
@@ -20,4 +21,6 @@ abstract final class Routes {
   static String order(int id) => '/account/orders/$id';
   static const wallet = '/account/wallet';
   static const addresses = '/account/addresses';
+  static const profile = '/account/profile';
+  static const notificationPrefs = '/account/notifications';
 }

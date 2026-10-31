@@ -4,7 +4,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../core/push.dart';
 import '../../../routing/routes.dart';
 import '../../auth/application/auth_controller.dart';
 
@@ -43,6 +42,8 @@ class AccountScreen extends HookConsumerWidget {
                 subtitle: Text(
                   account?.maskedPhone ?? 'Profile unavailable offline',
                 ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(Routes.profile),
               ),
             ),
             const SizedBox(height: DrsSpacing.md),
@@ -64,7 +65,12 @@ class AccountScreen extends HookConsumerWidget {
               subtitle: 'Saved delivery addresses',
               route: Routes.addresses,
             ),
-            const NotificationsSettingsTile(),
+            const _NavTile(
+              icon: Icons.notifications_outlined,
+              title: 'Notifications',
+              subtitle: 'This device and what we send',
+              route: Routes.notificationPrefs,
+            ),
             const _ComingSoonTile(
               icon: Icons.privacy_tip_outlined,
               title: 'Privacy & data',

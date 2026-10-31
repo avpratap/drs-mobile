@@ -5,6 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../features/account/presentation/account_screen.dart';
 import '../features/account/presentation/addresses_screen.dart';
+import '../features/account/presentation/notification_prefs_screen.dart';
+import '../features/account/presentation/profile_screen.dart';
 import '../features/auth/application/auth_controller.dart';
 import '../features/auth/presentation/sign_in_screen.dart';
 import '../features/cart/presentation/cart_screen.dart';
@@ -72,6 +74,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.newAddress,
         builder: (_, _) => const AddressFormScreen(),
       ),
+      GoRoute(
+        path: Routes.editAddress,
+        redirect: (_, s) => s.extra is Address ? null : Routes.addresses,
+        builder: (_, s) => AddressFormScreen(initial: s.extra! as Address),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => HomeShell(navigationShell: shell),
         branches: [
@@ -132,6 +139,14 @@ GoRouter appRouter(Ref ref) {
                   GoRoute(
                     path: 'addresses',
                     builder: (_, _) => const AddressesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'profile',
+                    builder: (_, _) => const ProfileScreen(),
+                  ),
+                  GoRoute(
+                    path: 'notifications',
+                    builder: (_, _) => const NotificationPrefsScreen(),
                   ),
                 ],
               ),

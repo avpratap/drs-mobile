@@ -210,3 +210,45 @@ extension ProductFullMapper on ProductFullOut {
     return ProductDetail(product: product, packs: packs);
   }
 }
+
+extension ProfileOutMapper on ProfileOut {
+  Profile toDomain() => Profile(
+    userId: userId,
+    phone: phone,
+    email: email,
+    emailVerified: emailVerified ?? false,
+    fullName: fullName,
+    displayName: displayName,
+    notifyPush: notifyPush ?? true,
+    notifySms: notifySms ?? true,
+    notifyWhatsapp: notifyWhatsapp ?? false,
+    notifyEmail: notifyEmail ?? false,
+    marketingOptIn: marketingOptIn ?? false,
+  );
+}
+
+extension RatingOutMapper on RatingOut {
+  Review toDomain() => Review(
+    id: id,
+    productId: productId,
+    stars: stars,
+    comment: comment,
+    status: ReviewStatus.parse(status),
+    verifiedPurchase: verifiedPurchase,
+    helpfulCount: helpfulCount,
+    adminReply: adminReply,
+    mine: mine ?? false,
+  );
+}
+
+extension ProductRatingsOutMapper on ProductRatingsOut {
+  ReviewSummary toDomain() => ReviewSummary(
+    productId: productId,
+    count: count,
+    average: average.toDouble(),
+    distribution: {
+      for (final e in distribution.entries) ?int.tryParse(e.key): e.value,
+    },
+    reviews: [for (final r in ratings) r.toDomain()],
+  );
+}
