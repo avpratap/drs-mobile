@@ -10,6 +10,7 @@ export 'src/theme/drs_typography.dart';
 export 'src/widgets/drs_adaptive.dart';
 export 'src/widgets/drs_app_bar.dart';
 export 'src/widgets/drs_button.dart';
+export 'src/widgets/drs_commerce.dart';
 export 'src/widgets/drs_inputs.dart';
 export 'src/widgets/drs_logo.dart';
 export 'src/widgets/drs_price.dart';

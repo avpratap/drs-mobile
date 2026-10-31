@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/drs_spacing.dart';
 
@@ -23,6 +24,11 @@ class DrsQuantityStepper extends StatelessWidget {
   /// Used for screen-reader labels, e.g. "Cow milk 500 ml".
   final String itemLabel;
 
+  void _change(int v) {
+    HapticFeedback.selectionClick();
+    onChanged!(v);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -30,7 +36,7 @@ class DrsQuantityStepper extends StatelessWidget {
 
     if (value <= 0 && min == 0) {
       return FilledButton.tonalIcon(
-        onPressed: enabled && max > 0 ? () => onChanged!(1) : null,
+        onPressed: enabled && max > 0 ? () => _change(1) : null,
         icon: const Icon(Icons.add, size: 18),
         label: Text(addLabel),
         style: FilledButton.styleFrom(
@@ -50,8 +56,8 @@ class DrsQuantityStepper extends StatelessWidget {
       value: '$value',
       increasedValue: canInc ? '${value + 1}' : null,
       decreasedValue: canDec ? '${value - 1}' : null,
-      onIncrease: canInc ? () => onChanged!(value + 1) : null,
-      onDecrease: canDec ? () => onChanged!(value - 1) : null,
+      onIncrease: canInc ? () => _change(value + 1) : null,
+      onDecrease: canDec ? () => _change(value - 1) : null,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.primary,
@@ -66,7 +72,7 @@ class DrsQuantityStepper extends StatelessWidget {
                     ? Icons.delete_outline
                     : Icons.remove,
                 tooltip: 'Decrease',
-                onPressed: canDec ? () => onChanged!(value - 1) : null,
+                onPressed: canDec ? () => _change(value - 1) : null,
               ),
               ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 28),
@@ -80,7 +86,7 @@ class DrsQuantityStepper extends StatelessWidget {
               _StepButton(
                 icon: Icons.add,
                 tooltip: 'Increase',
-                onPressed: canInc ? () => onChanged!(value + 1) : null,
+                onPressed: canInc ? () => _change(value + 1) : null,
               ),
             ],
           ),
