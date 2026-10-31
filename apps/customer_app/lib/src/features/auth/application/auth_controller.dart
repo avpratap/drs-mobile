@@ -75,6 +75,8 @@ class AuthController extends _$AuthController {
 
   Future<void> signOut() async {
     await ref.read(authRepositoryProvider).signOut();
+    // DPDP: drop cached order history / standing orders with the session.
+    await ref.read(appDatabaseProvider).clearUserData();
     if (ref.mounted) state = const AsyncData(SignedOut());
   }
 }

@@ -867,15 +867,281 @@ class CachedProductsCompanion extends UpdateCompanion<CachedProduct> {
   }
 }
 
+class $CachedJsonTable extends CachedJson
+    with TableInfo<$CachedJsonTable, CachedJsonData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedJsonTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _jsonMeta = const VerificationMeta('json');
+  @override
+  late final GeneratedColumn<String> json = GeneratedColumn<String>(
+    'json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [key, json, fetchedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_json';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedJsonData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('json')) {
+      context.handle(
+        _jsonMeta,
+        json.isAcceptableOrUnknown(data['json']!, _jsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jsonMeta);
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  CachedJsonData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedJsonData(
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      json: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}json'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedJsonTable createAlias(String alias) {
+    return $CachedJsonTable(attachedDatabase, alias);
+  }
+}
+
+class CachedJsonData extends DataClass implements Insertable<CachedJsonData> {
+  final String key;
+  final String json;
+  final DateTime fetchedAt;
+  const CachedJsonData({
+    required this.key,
+    required this.json,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['json'] = Variable<String>(json);
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  CachedJsonCompanion toCompanion(bool nullToAbsent) {
+    return CachedJsonCompanion(
+      key: Value(key),
+      json: Value(json),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory CachedJsonData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedJsonData(
+      key: serializer.fromJson<String>(json['key']),
+      json: serializer.fromJson<String>(json['json']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'json': serializer.toJson<String>(json),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  CachedJsonData copyWith({String? key, String? json, DateTime? fetchedAt}) =>
+      CachedJsonData(
+        key: key ?? this.key,
+        json: json ?? this.json,
+        fetchedAt: fetchedAt ?? this.fetchedAt,
+      );
+  CachedJsonData copyWithCompanion(CachedJsonCompanion data) {
+    return CachedJsonData(
+      key: data.key.present ? data.key.value : this.key,
+      json: data.json.present ? data.json.value : this.json,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedJsonData(')
+          ..write('key: $key, ')
+          ..write('json: $json, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(key, json, fetchedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedJsonData &&
+          other.key == this.key &&
+          other.json == this.json &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class CachedJsonCompanion extends UpdateCompanion<CachedJsonData> {
+  final Value<String> key;
+  final Value<String> json;
+  final Value<DateTime> fetchedAt;
+  final Value<int> rowid;
+  const CachedJsonCompanion({
+    this.key = const Value.absent(),
+    this.json = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedJsonCompanion.insert({
+    required String key,
+    required String json,
+    required DateTime fetchedAt,
+    this.rowid = const Value.absent(),
+  }) : key = Value(key),
+       json = Value(json),
+       fetchedAt = Value(fetchedAt);
+  static Insertable<CachedJsonData> custom({
+    Expression<String>? key,
+    Expression<String>? json,
+    Expression<DateTime>? fetchedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (json != null) 'json': json,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedJsonCompanion copyWith({
+    Value<String>? key,
+    Value<String>? json,
+    Value<DateTime>? fetchedAt,
+    Value<int>? rowid,
+  }) {
+    return CachedJsonCompanion(
+      key: key ?? this.key,
+      json: json ?? this.json,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (json.present) {
+      map['json'] = Variable<String>(json.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedJsonCompanion(')
+          ..write('key: $key, ')
+          ..write('json: $json, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CachedProductsTable cachedProducts = $CachedProductsTable(this);
+  late final $CachedJsonTable cachedJson = $CachedJsonTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [cachedProducts];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    cachedProducts,
+    cachedJson,
+  ];
 }
 
 typedef $$CachedProductsTableCreateCompanionBuilder =
@@ -1283,10 +1549,181 @@ typedef $$CachedProductsTableProcessedTableManager =
       CachedProduct,
       PrefetchHooks Function()
     >;
+typedef $$CachedJsonTableCreateCompanionBuilder = CachedJsonCompanion Function({
+  required String key,
+  required String json,
+  required DateTime fetchedAt,
+  Value<int> rowid,
+});
+typedef $$CachedJsonTableUpdateCompanionBuilder = CachedJsonCompanion Function({
+  Value<String> key,
+  Value<String> json,
+  Value<DateTime> fetchedAt,
+  Value<int> rowid,
+});
+
+class $$CachedJsonTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedJsonTable> {
+  $$CachedJsonTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedJsonTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedJsonTable> {
+  $$CachedJsonTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedJsonTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedJsonTable> {
+  $$CachedJsonTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get json =>
+      $composableBuilder(column: $table.json, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$CachedJsonTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedJsonTable,
+          CachedJsonData,
+          $$CachedJsonTableFilterComposer,
+          $$CachedJsonTableOrderingComposer,
+          $$CachedJsonTableAnnotationComposer,
+          $$CachedJsonTableCreateCompanionBuilder,
+          $$CachedJsonTableUpdateCompanionBuilder,
+          (
+            CachedJsonData,
+            BaseReferences<_$AppDatabase, $CachedJsonTable, CachedJsonData>,
+          ),
+          CachedJsonData,
+          PrefetchHooks Function()
+        > {
+  $$CachedJsonTableTableManager(_$AppDatabase db, $CachedJsonTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedJsonTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedJsonTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedJsonTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String> json = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedJsonCompanion(
+                key: key,
+                json: json,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String key,
+                required String json,
+                required DateTime fetchedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CachedJsonCompanion.insert(
+                key: key,
+                json: json,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CachedJsonTable, CachedJsonData>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $CachedJsonTable,
+                    CachedJsonData
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedJsonTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedJsonTable,
+      CachedJsonData,
+      $$CachedJsonTableFilterComposer,
+      $$CachedJsonTableOrderingComposer,
+      $$CachedJsonTableAnnotationComposer,
+      $$CachedJsonTableCreateCompanionBuilder,
+      $$CachedJsonTableUpdateCompanionBuilder,
+      (
+        CachedJsonData,
+        BaseReferences<_$AppDatabase, $CachedJsonTable, CachedJsonData>,
+      ),
+      CachedJsonData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$CachedProductsTableTableManager get cachedProducts =>
       $$CachedProductsTableTableManager(_db, _db.cachedProducts);
+  $$CachedJsonTableTableManager get cachedJson =>
+      $$CachedJsonTableTableManager(_db, _db.cachedJson);
 }

@@ -15,6 +15,15 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<!-- Razorpay UPI-intent flow: apps checkout may hand off to. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tez</string>
+		<string>phonepe</string>
+		<string>paytmmp</string>
+		<string>credpay</string>
+		<string>bhim</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

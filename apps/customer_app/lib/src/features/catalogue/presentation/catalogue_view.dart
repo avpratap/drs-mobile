@@ -1,8 +1,13 @@
 import 'package:drs_core/drs_core.dart';
 import 'package:drs_ui/drs_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../routing/routes.dart';
+import '../../cart/application/cart_providers.dart';
+import '../../cart/presentation/pack_picker.dart';
+import '../../common/async_views.dart';
 import '../application/catalogue_providers.dart';
 import '../data/product_repository.dart';
 
@@ -70,12 +75,40 @@ class CatalogueView extends ConsumerWidget {
   }
 }
 
-/// Product row used by Home and Shop.
-class ProductTile extends StatelessWidget {
+/// Product row used by Home and Shop: tap for the product page, "Add" for
+/// the quick pack picker (or a stepper once it's in the cart).
+class ProductTile extends ConsumerWidget {
   const ProductTile({required this.product, super.key});
 
   final Product product;
 
   @override
-  Widget build(BuildContext context) => DrsProductCard(product: product);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final line = ref.watch(
+      cartControllerProvider.select((c) => c.value?.lineFor(product.id)),
+    );
+    return DrsProductCard(
+      product: product,
+      onTap: () => context.push(Routes.product(product.id)),
+      trailing: product.fromPrice == null
+          ? null
+          : line == null
+          ? DrsQuantityStepper(
+              value: 0,
+              itemLabel: product.name,
+              onChanged: (_) => showPackPickerSheet(context, product.id),
+            )
+          : DrsQuantityStepper(
+              value: packsIn(line.qty, product.packSize),
+              max: 50,
+              itemLabel: product.name,
+              onChanged: (v) => runWithSnack(
+                context,
+                () => ref
+                    .read(cartControllerProvider.notifier)
+                    .setPacks(line, v, product.packSize),
+              ),
+            ),
+    );
+  }
 }

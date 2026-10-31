@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../routing/routes.dart';
 import '../../auth/application/auth_controller.dart';
+import '../../cart/presentation/cart_button.dart';
 import 'catalogue_view.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -23,7 +24,7 @@ class HomeScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return DrsScaffold(
-      appBar: const DrsAppBar(),
+      appBar: const DrsAppBar(actions: [CartAction()]),
       maxContentWidth: DrsSpacing.maxWideContentWidth,
       body: CatalogueView(
         builder: (context, snapshot) {

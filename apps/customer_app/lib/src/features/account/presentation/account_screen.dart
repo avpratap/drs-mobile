@@ -1,8 +1,10 @@
 import 'package:drs_ui/drs_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../routing/routes.dart';
 import '../../auth/application/auth_controller.dart';
 
 class AccountScreen extends HookConsumerWidget {
@@ -43,14 +45,23 @@ class AccountScreen extends HookConsumerWidget {
               ),
             ),
             const SizedBox(height: DrsSpacing.md),
-            const _ComingSoonTile(icon: Icons.receipt_long, title: 'Orders'),
-            const _ComingSoonTile(
+            const _NavTile(
+              icon: Icons.receipt_long,
+              title: 'Orders',
+              subtitle: 'History, tracking and payments',
+              route: Routes.orders,
+            ),
+            const _NavTile(
               icon: Icons.account_balance_wallet_outlined,
               title: 'Wallet & billing',
+              subtitle: 'Balance and transactions',
+              route: Routes.wallet,
             ),
-            const _ComingSoonTile(
+            const _NavTile(
               icon: Icons.location_on_outlined,
               title: 'Addresses',
+              subtitle: 'Saved delivery addresses',
+              route: Routes.addresses,
             ),
             const _ComingSoonTile(
               icon: Icons.privacy_tip_outlined,
@@ -81,6 +92,29 @@ class AccountScreen extends HookConsumerWidget {
       ),
     );
   }
+}
+
+class _NavTile extends StatelessWidget {
+  const _NavTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.route,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String route;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    leading: Icon(icon),
+    title: Text(title),
+    subtitle: Text(subtitle),
+    trailing: const Icon(Icons.chevron_right),
+    onTap: () => context.push(route),
+  );
 }
 
 class _ComingSoonTile extends StatelessWidget {

@@ -6,4 +6,19 @@ abstract final class Routes {
   static const shop = '/shop';
   static const subscriptions = '/subscriptions';
   static const account = '/account';
+
+  // Full-screen flows above the tab shell.
+  static const cart = '/cart';
+  static const checkout = '/cart/checkout';
+  static const payOrder = '/pay';
+  static const newAddress = '/addresses/new';
+  static String product(int id) => '/product/$id';
+
+  // Inside tabs (keep the navigation bar).
+  static const subscribeBrowse = '/subscriptions/add';
+  static String subscribeProduct(int id) => '/subscriptions/add/$id';
+  static const orders = '/account/orders';
+  static String order(int id) => '/account/orders/$id';
+  static const wallet = '/account/wallet';
+  static const addresses = '/account/addresses';
 }
