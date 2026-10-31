@@ -11,8 +11,11 @@ abstract final class DrsSpacing {
   /// Minimum interactive target (Material / WCAG).
   static const minTapTarget = 48.0;
 
-  /// Content is centred and capped at this width on tablets / landscape.
+  /// Forms / reading content are centred and capped at this width.
   static const maxContentWidth = 640.0;
+
+  /// Catalogue-style content may use more width (multi-column lists).
+  static const maxWideContentWidth = 1200.0;
 }
 
 abstract final class DrsRadius {

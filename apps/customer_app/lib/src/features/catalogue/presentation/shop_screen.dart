@@ -16,6 +16,7 @@ class ShopScreen extends HookConsumerWidget {
 
     return DrsScaffold(
       appBar: const DrsAppBar(title: 'Shop'),
+      maxContentWidth: DrsSpacing.maxWideContentWidth,
       body: CatalogueView(
         builder: (context, snapshot) {
           final products = snapshot.products.where((p) {
@@ -85,7 +86,7 @@ class ShopScreen extends HookConsumerWidget {
                   padding: const EdgeInsets.symmetric(
                     horizontal: DrsSpacing.md,
                   ),
-                  sliver: SliverList.builder(
+                  sliver: DrsAdaptiveSliverList(
                     itemCount: products.length,
                     itemBuilder: (_, i) => ProductTile(product: products[i]),
                   ),

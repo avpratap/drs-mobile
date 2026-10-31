@@ -113,6 +113,9 @@ void main() {
     expect(find.text('+91 98•••••210'), findsOneWidget);
     await t.tap(find.text('Sign out'));
     await t.pumpAndSettle();
+    expect(find.text('Sign out?'), findsOneWidget); // adaptive confirm dialog
+    await t.tap(find.text('Sign out').last);
+    await t.pumpAndSettle();
     expect(find.text('Sign in'), findsOneWidget);
     expect(await tokens.read(), isNull);
   });

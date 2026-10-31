@@ -20,6 +20,9 @@ class SignInScreen extends HookConsumerWidget {
     final error = useState<String?>(null);
     final busy = useState(false);
     final theme = Theme.of(context);
+    // Short viewports (landscape phones, split screen): tighten the header so
+    // the form stays above the fold.
+    final short = MediaQuery.sizeOf(context).height < 500;
 
     Future<void> submit() async {
       final e164 = IndianPhone.normalize(phone.text);
@@ -51,9 +54,12 @@ class SignInScreen extends HookConsumerWidget {
       padded: true,
       body: ListView(
         children: [
-          const SizedBox(height: DrsSpacing.xxl),
-          const DrsLogo(size: 44, tagline: 'Pure dairy, delivered daily'),
-          const SizedBox(height: DrsSpacing.xl),
+          SizedBox(height: short ? DrsSpacing.md : DrsSpacing.xxl),
+          DrsLogo(
+            size: short ? 32 : 44,
+            tagline: 'Pure dairy, delivered daily',
+          ),
+          SizedBox(height: short ? DrsSpacing.md : DrsSpacing.xl),
           Text('Sign in', style: theme.textTheme.headlineMedium),
           const SizedBox(height: DrsSpacing.xs),
           Text(

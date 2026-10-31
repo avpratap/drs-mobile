@@ -64,6 +64,14 @@ class AccountScreen extends HookConsumerWidget {
               expand: true,
               isLoading: signingOut.value,
               onPressed: () async {
+                final confirmed = await showDrsConfirmDialog(
+                  context,
+                  title: 'Sign out?',
+                  message: 'You will need a new OTP to sign in again.',
+                  confirmLabel: 'Sign out',
+                  destructive: true,
+                );
+                if (!confirmed) return;
                 signingOut.value = true;
                 await ref.read(authControllerProvider.notifier).signOut();
               },

@@ -112,7 +112,6 @@ abstract final class DrsTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 1,
-        centerTitle: false,
         titleTextStyle: text.titleLarge,
       ),
       filledButtonTheme: FilledButtonThemeData(

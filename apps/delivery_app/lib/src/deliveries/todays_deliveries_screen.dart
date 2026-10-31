@@ -30,12 +30,23 @@ class TodaysDeliveriesScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Log out',
             icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(riderAuthProvider.notifier).signOut(),
+            onPressed: () async {
+              final confirmed = await showDrsConfirmDialog(
+                context,
+                title: 'Log out?',
+                message: 'You will need a new OTP to log in again.',
+                confirmLabel: 'Log out',
+                destructive: true,
+              );
+              if (confirmed) {
+                await ref.read(riderAuthProvider.notifier).signOut();
+              }
+            },
           ),
         ],
       ),
       body: switch (deliveries) {
-        AsyncValue(:final value?) => RefreshIndicator(
+        AsyncValue(:final value?) => RefreshIndicator.adaptive(
           onRefresh: refresh,
           child: value.isEmpty
               ? ListView(

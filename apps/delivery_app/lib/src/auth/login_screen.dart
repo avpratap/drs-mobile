@@ -24,6 +24,9 @@ class LoginScreen extends HookConsumerWidget {
     final busy = useState(false);
     final env = ref.watch(envProvider);
     final theme = Theme.of(context);
+    // Short viewports (landscape phones, split screen): tighten the header so
+    // the form stays above the fold.
+    final short = MediaQuery.sizeOf(context).height < 500;
     final auth = ref.read(riderAuthProvider.notifier);
 
     Future<void> run(Future<void> Function() action) async {
@@ -58,9 +61,9 @@ class LoginScreen extends HookConsumerWidget {
       padded: true,
       body: ListView(
         children: [
-          const SizedBox(height: DrsSpacing.xxl),
-          const DrsLogo(size: 44, tagline: 'Delivery partner'),
-          const SizedBox(height: DrsSpacing.xl),
+          SizedBox(height: short ? DrsSpacing.md : DrsSpacing.xxl),
+          DrsLogo(size: short ? 32 : 44, tagline: 'Delivery partner'),
+          SizedBox(height: short ? DrsSpacing.md : DrsSpacing.xl),
           Text('Rider login', style: theme.textTheme.headlineMedium),
           const SizedBox(height: DrsSpacing.lg),
           if (!awaitingOtp) ...[

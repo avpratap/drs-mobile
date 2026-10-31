@@ -2,10 +2,12 @@
 /// set of on-brand widgets.
 library;
 
+export 'src/theme/drs_breakpoints.dart';
 export 'src/theme/drs_colors.dart';
 export 'src/theme/drs_spacing.dart';
 export 'src/theme/drs_theme.dart';
 export 'src/theme/drs_typography.dart';
+export 'src/widgets/drs_adaptive.dart';
 export 'src/widgets/drs_app_bar.dart';
 export 'src/widgets/drs_button.dart';
 export 'src/widgets/drs_inputs.dart';

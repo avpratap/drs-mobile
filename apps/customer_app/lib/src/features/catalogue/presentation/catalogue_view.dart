@@ -36,7 +36,7 @@ class CatalogueView extends ConsumerWidget {
               onRetry: () => refresh(ref),
             ),
           Expanded(
-            child: RefreshIndicator(
+            child: RefreshIndicator.adaptive(
               onRefresh: () => refresh(ref),
               child: value.products.isEmpty
                   ? ListView(
@@ -77,8 +77,5 @@ class ProductTile extends StatelessWidget {
   final Product product;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: DrsSpacing.sm),
-    child: DrsProductCard(product: product),
-  );
+  Widget build(BuildContext context) => DrsProductCard(product: product);
 }

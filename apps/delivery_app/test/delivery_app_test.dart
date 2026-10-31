@@ -85,8 +85,15 @@ void main() {
     await t.pump();
     await t.tap(find.text('Send OTP'));
     await t.pumpAndSettle();
+    await t.ensureVisible(find.text('Use dev code 654321'));
     await t.tap(find.text('Use dev code 654321'));
     await t.pump();
+    await t.scrollUntilVisible(
+      find.text('Log in'),
+      80,
+      scrollable: find.byType(Scrollable).first, // the page, not a TextField
+    );
+    await t.pumpAndSettle();
     await t.tap(find.text('Log in'));
     await t.pumpAndSettle();
     return backend;
@@ -103,6 +110,8 @@ void main() {
 
     await t.tap(find.byTooltip('Log out'));
     await t.pumpAndSettle();
+    await t.tap(find.text('Log out').last);
+    await t.pumpAndSettle();
     expect(find.text('Rider login'), findsOneWidget);
   });
 
@@ -112,6 +121,50 @@ void main() {
     expect(find.textContaining('delivery partners'), findsOneWidget);
     expect(find.byType(DrsEmptyState), findsNothing);
   });
+
+  for (final (name, size, inset) in [
+    ('320dp phone', const Size(320, 568), const EdgeInsets.only(top: 20)),
+    (
+      'notched phone',
+      const Size(393, 852),
+      const EdgeInsets.only(top: 59, bottom: 34),
+    ),
+    (
+      'landscape phone',
+      const Size(852, 393),
+      const EdgeInsets.only(left: 59, right: 59, bottom: 21),
+    ),
+  ]) {
+    testWidgets(
+      'login and Today screens fit on $name',
+      variant: const TargetPlatformVariant({
+        TargetPlatform.android,
+        TargetPlatform.iOS,
+      }),
+      (t) async {
+        final pad = FakeViewPadding(
+          left: inset.left * 3,
+          top: inset.top * 3,
+          right: inset.right * 3,
+          bottom: inset.bottom * 3,
+        );
+        t.view
+          ..devicePixelRatio = 3
+          ..physicalSize = size * 3
+          ..padding = pad
+          ..viewPadding = pad;
+        addTearDown(t.view.reset);
+
+        await login(t, role: 'delivery');
+        expect(t.takeException(), isNull);
+        expect(find.text('No deliveries yet'), findsOneWidget);
+        expect(
+          t.getTopLeft(find.text("Today's deliveries")).dy,
+          greaterThanOrEqualTo(inset.top),
+        );
+      },
+    );
+  }
 
   test('todayIst rolls over at IST midnight, not UTC', () {
     // 2026-10-31 19:00 UTC == 2026-11-01 00:30 IST.

@@ -18,7 +18,7 @@ class DrsLoading extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(),
+          const CircularProgressIndicator.adaptive(),
           if (message != null) ...[
             const SizedBox(height: DrsSpacing.md),
             Text(message!, style: Theme.of(context).textTheme.bodyMedium),

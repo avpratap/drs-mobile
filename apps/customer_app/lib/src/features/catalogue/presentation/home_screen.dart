@@ -1,4 +1,3 @@
-import 'package:drs_core/drs_core.dart';
 import 'package:drs_ui/drs_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +24,7 @@ class HomeScreen extends ConsumerWidget {
 
     return DrsScaffold(
       appBar: const DrsAppBar(),
+      maxContentWidth: DrsSpacing.maxWideContentWidth,
       body: CatalogueView(
         builder: (context, snapshot) {
           // Milk & buttermilk first: the daily-essentials line.
@@ -32,32 +32,49 @@ class HomeScreen extends ConsumerWidget {
             ...snapshot.products.where((p) => p.line.usesSkyAccent),
             ...snapshot.products.where((p) => !p.line.usesSkyAccent),
           ].take(6).toList();
-          return ListView(
-            padding: const EdgeInsets.all(DrsSpacing.md),
-            children: [
-              Text(
-                '${_greeting(DateTime.now())}, ${account?.greetingName ?? 'there'}',
-                style: theme.textTheme.headlineSmall,
-              ),
-              const SizedBox(height: DrsSpacing.md),
-              const _HeroCard(),
-              const SizedBox(height: DrsSpacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      "Today's essentials",
-                      style: theme.textTheme.titleLarge,
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  DrsSpacing.md,
+                  DrsSpacing.md,
+                  DrsSpacing.md,
+                  DrsSpacing.xs,
+                ),
+                sliver: SliverList.list(
+                  children: [
+                    Text(
+                      '${_greeting(DateTime.now())}, '
+                      "${account?.greetingName ?? 'there'}",
+                      style: theme.textTheme.headlineSmall,
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () => context.go(Routes.shop),
-                    child: const Text('See all'),
-                  ),
-                ],
+                    const SizedBox(height: DrsSpacing.md),
+                    const _HeroCard(),
+                    const SizedBox(height: DrsSpacing.lg),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Today's essentials",
+                            style: theme.textTheme.titleLarge,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => context.go(Routes.shop),
+                          child: const Text('See all'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: DrsSpacing.xs),
-              for (final Product p in featured) ProductTile(product: p),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: DrsSpacing.md),
+                sliver: DrsAdaptiveSliverList(
+                  itemCount: featured.length,
+                  itemBuilder: (_, i) => ProductTile(product: featured[i]),
+                ),
+              ),
             ],
           );
         },
