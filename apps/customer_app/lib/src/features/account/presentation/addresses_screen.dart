@@ -98,7 +98,12 @@ class _AddressCard extends ConsumerWidget {
     final theme = Theme.of(context);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(DrsSpacing.md, DrsSpacing.sm, 0, DrsSpacing.sm),
+        padding: const EdgeInsets.fromLTRB(
+          DrsSpacing.md,
+          DrsSpacing.sm,
+          0,
+          DrsSpacing.sm,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -112,12 +117,16 @@ class _AddressCard extends ConsumerWidget {
                     children: [
                       Text(address.title, style: theme.textTheme.titleMedium),
                       if (address.isDefault)
-                        const DrsStatusChip(label: 'Default', tone: DrsTone.positive),
+                        const DrsStatusChip(
+                          label: 'Default',
+                          tone: DrsTone.positive,
+                        ),
                     ],
                   ),
                   const SizedBox(height: DrsSpacing.xxs),
                   Text(address.oneLine),
-                  if (address.contactName != null || address.maskedPhone != null)
+                  if (address.contactName != null ||
+                      address.maskedPhone != null)
                     Text(
                       [?address.contactName, ?address.maskedPhone].join(' · '),
                       style: theme.textTheme.bodySmall,
@@ -131,7 +140,10 @@ class _AddressCard extends ConsumerWidget {
               itemBuilder: (_) => [
                 const PopupMenuItem(value: 'edit', child: Text('Edit')),
                 if (!address.isDefault)
-                  const PopupMenuItem(value: 'default', child: Text('Set as default')),
+                  const PopupMenuItem(
+                    value: 'default',
+                    child: Text('Set as default'),
+                  ),
                 const PopupMenuItem(value: 'delete', child: Text('Delete')),
               ],
             ),

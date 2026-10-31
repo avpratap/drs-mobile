@@ -8,6 +8,7 @@ import '../../../routing/routes.dart';
 import '../../cart/presentation/cart_button.dart';
 import '../../cart/presentation/pack_picker.dart';
 import '../../common/async_views.dart';
+import '../../reviews/presentation/product_reviews_section.dart';
 import '../application/product_detail_provider.dart';
 
 /// Product page: image, description, pack sizes, add to cart, subscribe.
@@ -37,8 +38,11 @@ class ProductDetailScreen extends ConsumerWidget {
             final info = _Info(detail: d);
             return SingleChildScrollView(
               padding: const EdgeInsets.all(DrsSpacing.md),
-              child: wide
-                  ? Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (wide)
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(child: image),
@@ -46,14 +50,15 @@ class ProductDetailScreen extends ConsumerWidget {
                         Expanded(child: info),
                       ],
                     )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        image,
-                        const SizedBox(height: DrsSpacing.md),
-                        info,
-                      ],
-                    ),
+                  else ...[
+                    image,
+                    const SizedBox(height: DrsSpacing.md),
+                    info,
+                  ],
+                  const SizedBox(height: DrsSpacing.lg),
+                  ProductReviewsSection(productId: d.product.id),
+                ],
+              ),
             );
           },
         ),

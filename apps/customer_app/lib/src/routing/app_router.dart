@@ -17,6 +17,8 @@ import '../features/checkout/presentation/address_form_screen.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
 import '../features/orders/presentation/order_detail_screen.dart';
 import '../features/orders/presentation/orders_screen.dart';
+import '../features/reviews/presentation/review_editor_screen.dart';
+import '../features/reviews/presentation/reviews_screen.dart';
 import '../features/shell/home_shell.dart';
 import '../features/shell/splash_screen.dart';
 import '../features/subscriptions/presentation/subscribe_browse_screen.dart';
@@ -57,6 +59,19 @@ GoRouter appRouter(Ref ref) {
         path: '/product/:id',
         builder: (_, s) =>
             ProductDetailScreen(productId: int.parse(s.pathParameters['id']!)),
+        routes: [
+          GoRoute(
+            path: 'reviews',
+            builder: (_, s) =>
+                ReviewsScreen(productId: int.parse(s.pathParameters['id']!)),
+          ),
+          GoRoute(
+            path: 'review',
+            builder: (_, s) => ReviewEditorScreen(
+              productId: int.parse(s.pathParameters['id']!),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.cart,

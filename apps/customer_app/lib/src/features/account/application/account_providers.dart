@@ -11,7 +11,8 @@ AccountRepository accountRepository(Ref ref) =>
     AccountRepository(ref.watch(drsApiProvider).getAccountApi());
 
 @riverpod
-Future<Profile> profile(Ref ref) => ref.watch(accountRepositoryProvider).profile();
+Future<Profile> profile(Ref ref) =>
+    ref.watch(accountRepositoryProvider).profile();
 
 @riverpod
 Future<Map<String, String>> consents(Ref ref) =>

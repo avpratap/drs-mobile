@@ -13,6 +13,8 @@ abstract final class Routes {
   static const newAddress = '/addresses/new';
   static const editAddress = '/addresses/edit';
   static String product(int id) => '/product/$id';
+  static String productReviews(int id) => '/product/$id/reviews';
+  static String writeReview(int id) => '/product/$id/review';
 
   // Inside tabs (keep the navigation bar).
   static const subscribeBrowse = '/subscriptions/add';

@@ -90,7 +90,10 @@ class _ProfileForm extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Mobile number', style: theme.textTheme.labelMedium),
-                      Text(profile.maskedPhone, style: theme.textTheme.titleMedium),
+                      Text(
+                        profile.maskedPhone,
+                        style: theme.textTheme.titleMedium,
+                      ),
                       Text(
                         'Your sign-in number can’t be changed here.',
                         style: theme.textTheme.bodySmall,
@@ -129,8 +132,12 @@ class _ProfileForm extends HookConsumerWidget {
                   : Padding(
                       padding: const EdgeInsets.all(DrsSpacing.xs),
                       child: DrsStatusChip(
-                        label: profile.emailVerified ? 'Verified' : 'Not verified',
-                        tone: profile.emailVerified ? DrsTone.positive : DrsTone.warning,
+                        label: profile.emailVerified
+                            ? 'Verified'
+                            : 'Not verified',
+                        tone: profile.emailVerified
+                            ? DrsTone.positive
+                            : DrsTone.warning,
                       ),
                     ),
               helperText: emailChanged && emailText.isNotEmpty
@@ -139,16 +146,25 @@ class _ProfileForm extends HookConsumerWidget {
             ),
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
-            validator: (v) => (v == null || v.trim().isEmpty || isPlausibleEmail(v))
+            validator: (v) =>
+                (v == null || v.trim().isEmpty || isPlausibleEmail(v))
                 ? null
                 : 'Enter a valid email address',
           ),
           if (error.value != null) ...[
             gap,
-            Text(error.value!, style: TextStyle(color: theme.colorScheme.error)),
+            Text(
+              error.value!,
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
           ],
           const SizedBox(height: DrsSpacing.lg),
-          DrsButton(label: 'Save', expand: true, isLoading: busy.value, onPressed: save),
+          DrsButton(
+            label: 'Save',
+            expand: true,
+            isLoading: busy.value,
+            onPressed: save,
+          ),
         ],
       ),
     );

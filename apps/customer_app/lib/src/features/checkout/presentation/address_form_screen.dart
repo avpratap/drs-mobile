@@ -50,7 +50,9 @@ class AddressFormScreen extends HookConsumerWidget {
       busy.value = true;
       error.value = null;
       final repo = ref.read(accountRepositoryProvider);
-      final phoneE164 = opt(phone) == null ? null : IndianPhone.normalize(phone.text);
+      final phoneE164 = opt(phone) == null
+          ? null
+          : IndianPhone.normalize(phone.text);
       try {
         final Address saved;
         if (a == null) {
@@ -201,7 +203,9 @@ class AddressFormScreen extends HookConsumerWidget {
                   padding: const EdgeInsets.only(bottom: DrsSpacing.sm),
                   child: Text(
                     error.value!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ),
               DrsButton(

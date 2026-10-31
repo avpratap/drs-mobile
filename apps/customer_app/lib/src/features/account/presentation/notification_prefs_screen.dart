@@ -31,40 +31,40 @@ class NotificationPrefsScreen extends ConsumerWidget {
     return DrsScaffold(
       appBar: const DrsAppBar(title: 'Notifications'),
       body: ListView(
-          padding: const EdgeInsets.all(DrsSpacing.md),
-          children: [
-            const _Header('This device'),
-            const Card(child: NotificationsSettingsTile()),
-            const SizedBox(height: DrsSpacing.lg),
-            const _Header('What we send'),
-            Padding(
-              padding: const EdgeInsets.only(bottom: DrsSpacing.sm),
-              child: Text(
-                device.enabled
-                    ? 'These apply to every device you sign in on.'
-                    : 'Push is off on this device, so nothing is shown here. '
-                          'These choices still apply to your other devices.',
-                style: theme.textTheme.bodySmall,
-              ),
+        padding: const EdgeInsets.all(DrsSpacing.md),
+        children: [
+          const _Header('This device'),
+          const Card(child: NotificationsSettingsTile()),
+          const SizedBox(height: DrsSpacing.lg),
+          const _Header('What we send'),
+          Padding(
+            padding: const EdgeInsets.only(bottom: DrsSpacing.sm),
+            child: Text(
+              device.enabled
+                  ? 'These apply to every device you sign in on.'
+                  : 'Push is off on this device, so nothing is shown here. '
+                        'These choices still apply to your other devices.',
+              style: theme.textTheme.bodySmall,
             ),
-            switch ((profile, consents)) {
-              (AsyncData(value: final p), AsyncData(value: final c)) =>
-                _Categories(profile: p, consents: c),
-              (AsyncError(), _) || (_, AsyncError()) => DrsEmptyState.error(
-                title: "Couldn't load your preferences",
-                onAction: () {
-                  ref
-                    ..invalidate(profileProvider)
-                    ..invalidate(consentsProvider);
-                },
-              ),
-              _ => const Padding(
-                padding: EdgeInsets.all(DrsSpacing.lg),
-                child: DrsLoading(),
-              ),
-            },
-          ],
-        ),
+          ),
+          switch ((profile, consents)) {
+            (AsyncData(value: final p), AsyncData(value: final c)) =>
+              _Categories(profile: p, consents: c),
+            (AsyncError(), _) || (_, AsyncError()) => DrsEmptyState.error(
+              title: "Couldn't load your preferences",
+              onAction: () {
+                ref
+                  ..invalidate(profileProvider)
+                  ..invalidate(consentsProvider);
+              },
+            ),
+            _ => const Padding(
+              padding: EdgeInsets.all(DrsSpacing.lg),
+              child: DrsLoading(),
+            ),
+          },
+        ],
+      ),
     );
   }
 }

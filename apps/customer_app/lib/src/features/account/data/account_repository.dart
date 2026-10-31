@@ -38,7 +38,10 @@ class AccountRepository {
 
   Future<void> setConsent(String purpose, {required bool granted}) => guard(
     () => _api.recordConsent(
-      consentIn: ConsentIn(purpose: purpose, action: granted ? 'granted' : 'withdrawn'),
+      consentIn: ConsentIn(
+        purpose: purpose,
+        action: granted ? 'granted' : 'withdrawn',
+      ),
     ),
   );
 
@@ -49,16 +52,20 @@ class AccountRepository {
     ],
   );
 
-  Future<Address> createAddress(AddressIn input) =>
-      guard(() async => (await _api.createAddress(addressIn: input)).data!.toDomain());
+  Future<Address> createAddress(AddressIn input) => guard(
+    () async => (await _api.createAddress(addressIn: input)).data!.toDomain(),
+  );
 
   Future<Address> updateAddress(int id, AddressUpdate patch) => guard(
-    () async =>
-        (await _api.updateAddress(addressId: id, addressUpdate: patch)).data!.toDomain(),
+    () async => (await _api.updateAddress(
+      addressId: id,
+      addressUpdate: patch,
+    )).data!.toDomain(),
   );
 
   Future<void> setDefaultAddress(int id) =>
       guard(() => _api.setDefaultAddress(addressId: id));
 
-  Future<void> deleteAddress(int id) => guard(() => _api.deleteAddress(addressId: id));
+  Future<void> deleteAddress(int id) =>
+      guard(() => _api.deleteAddress(addressId: id));
 }
