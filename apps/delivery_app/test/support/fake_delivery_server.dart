@@ -39,6 +39,9 @@ class FakeDeliveryServer implements HttpClientAdapter {
   final calls = <Call>[];
   final _replay = <String, Object>{};
   int uploads = 0;
+
+  /// Active push tokens → platform.
+  final deviceTokens = <String, String>{};
   int writesApplied = 0;
 
   static Map<String, Object?> _order(
@@ -178,6 +181,17 @@ class FakeDeliveryServer implements HttpClientAdapter {
       );
     }
     if (p == '/api/v1/auth/logout') return (200, {'detail': 'logged out'});
+    if (p == '/api/v1/account/device-tokens') {
+      deviceTokens[b['token']! as String] = b['platform']! as String;
+      return (
+        200,
+        {'token': b['token'], 'platform': b['platform'], 'active': true},
+      );
+    }
+    if (p == '/api/v1/account/device-tokens/unregister') {
+      deviceTokens.remove(b['token']);
+      return (204, '');
+    }
     if (p == '/api/v1/products') {
       return (
         200,

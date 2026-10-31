@@ -8,6 +8,11 @@
         android:label="DRS"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- FCM: background/terminated notifications use the same channel the
+             app creates for foreground ones (Orders & deliveries). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="drs_default"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

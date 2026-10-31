@@ -21,7 +21,10 @@ class DrsApiError implements Exception {
   factory DrsApiError.from(Object error) {
     if (error is DrsApiError) return error;
     if (error is! DioException) {
-      return const DrsApiError(DrsApiErrorKind.unknown, 'Something went wrong.');
+      return const DrsApiError(
+        DrsApiErrorKind.unknown,
+        'Something went wrong.',
+      );
     }
     switch (error.type) {
       case DioExceptionType.connectionError:

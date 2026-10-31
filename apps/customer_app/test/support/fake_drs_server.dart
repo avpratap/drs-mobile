@@ -124,6 +124,9 @@ class FakeDrsServer implements HttpClientAdapter {
 
   double walletBalance = 250;
 
+  /// Active push tokens → platform.
+  final deviceTokens = <String, String>{};
+
   /// Puts [qty] of [productId] in the cart (test setup).
   void seedCart(int productId, double qty) {
     cart[productId] = qty;
@@ -229,6 +232,15 @@ class FakeDrsServer implements HttpClientAdapter {
     RegExpMatch? match(String pattern) => RegExp('^$pattern\$').firstMatch(p);
 
     // auth
+    if (p == '/api/v1/auth/otp/request') {
+      return (200, {'detail': 'OTP sent', 'dev_otp': '123456'});
+    }
+    if (p == '/api/v1/auth/otp/verify') {
+      return b['otp'] == '123456'
+          ? (200, {'access_token': 'a', 'refresh_token': 'r'})
+          : (401, {'detail': 'Invalid or expired OTP'});
+    }
+    if (p == '/api/v1/auth/logout') return (200, {'detail': 'logged out'});
     if (p == '/api/v1/auth/me') {
       return loggedIn
           ? (
@@ -242,6 +254,18 @@ class FakeDrsServer implements HttpClientAdapter {
               },
             )
           : (401, {'detail': 'Not authenticated'});
+    }
+    // push device tokens
+    if (p == '/api/v1/account/device-tokens') {
+      deviceTokens[b['token']! as String] = b['platform']! as String;
+      return (
+        200,
+        {'token': b['token'], 'platform': b['platform'], 'active': true},
+      );
+    }
+    if (p == '/api/v1/account/device-tokens/unregister') {
+      deviceTokens.remove(b['token']);
+      return (204, '');
     }
     // catalogue
     if (m == 'GET' && p == '/api/v1/products') return (200, products);

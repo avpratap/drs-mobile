@@ -18,6 +18,10 @@ doc/DeliveryOrderItemOut.md
 doc/DeliveryOrderOut.md
 doc/DeliverySummaryOut.md
 doc/DetailOut.md
+doc/DeviceTokenIn.md
+doc/DeviceTokenOut.md
+doc/DeviceTokenUnregisterIn.md
+doc/DevicesApi.md
 doc/FailIn.md
 doc/HTTPValidationError.md
 doc/OTPRequest.md
@@ -70,6 +74,7 @@ lib/src/api/auth_api.dart
 lib/src/api/billing_api.dart
 lib/src/api/cart_api.dart
 lib/src/api/delivery_api.dart
+lib/src/api/devices_api.dart
 lib/src/api/orders_api.dart
 lib/src/api/payments_api.dart
 lib/src/api/products_api.dart
@@ -94,6 +99,9 @@ lib/src/model/delivery_order_item_out.dart
 lib/src/model/delivery_order_out.dart
 lib/src/model/delivery_summary_out.dart
 lib/src/model/detail_out.dart
+lib/src/model/device_token_in.dart
+lib/src/model/device_token_out.dart
+lib/src/model/device_token_unregister_in.dart
 lib/src/model/fail_in.dart
 lib/src/model/http_validation_error.dart
 lib/src/model/order_create.dart

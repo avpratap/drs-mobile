@@ -94,7 +94,7 @@ need a missing key stay disabled.
 | `DRS_ENV` | `dev` (default) · `staging` · `prod` — prod hides the dev-OTP hint and requires `https` |
 | `DRS_API_BASE_URL` | Backend origin. Default `http://10.0.2.2:8000` (Android emulator → host) |
 | `DRS_RAZORPAY_KEY_ID` | Razorpay **publishable** key id (checkout milestone) |
-| `DRS_FCM_SENDER_ID` | Firebase Cloud Messaging (push milestone) |
+| `DRS_FCM_SENDER_ID`, `DRS_FIREBASE_API_KEY`, `DRS_FIREBASE_PROJECT_ID`, `DRS_FIREBASE_APP_ID_ANDROID`, `DRS_FIREBASE_APP_ID_IOS` | Push notifications (FCM). All must be set or push stays disabled — see [docs/PUSH_NOTIFICATIONS.md](docs/PUSH_NOTIFICATIONS.md) |
 | `DRS_GOOGLE_MAPS_API_KEY` | Maps (delivery app). Android also reads it from the `DRS_GOOGLE_MAPS_API_KEY` env var / Gradle property into a manifest placeholder |
 
 `env/*.json` (except `*.example.json`), `google-services.json`,

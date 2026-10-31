@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:drs_api/drs_api_session.dart';
 import 'package:drs_core/drs_core.dart';
+import 'package:drs_ui/drs_ui.dart' show notificationsControllerProvider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/providers.dart';
@@ -74,6 +75,8 @@ class AuthController extends _$AuthController {
   }
 
   Future<void> signOut() async {
+    // Deactivate this device's push token while the session is still valid.
+    await ref.read(notificationsControllerProvider.notifier).signOut();
     await ref.read(authRepositoryProvider).signOut();
     // DPDP: drop cached order history / standing orders with the session.
     await ref.read(appDatabaseProvider).clearUserData();

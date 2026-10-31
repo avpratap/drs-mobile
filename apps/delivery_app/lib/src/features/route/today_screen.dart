@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../auth/rider_auth.dart';
 import '../../core/providers.dart';
+import '../../core/push.dart';
 import '../../routes.dart';
 import '../common.dart';
 import '../map/stops_map.dart';
@@ -95,6 +96,24 @@ class TodayScreen extends ConsumerWidget {
             tooltip: 'Map',
             icon: const Icon(Icons.map_outlined),
             onPressed: () => context.push(Routes.map),
+          ),
+          IconButton(
+            tooltip: 'Notifications',
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              useSafeArea: true,
+              showDragHandle: true,
+              constraints: const BoxConstraints(
+                maxWidth: DrsSpacing.maxContentWidth,
+              ),
+              builder: (_) => const SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: DrsSpacing.md),
+                  child: NotificationsSettingsTile(),
+                ),
+              ),
+            ),
           ),
           IconButton(
             tooltip: 'Log out',
@@ -250,6 +269,7 @@ class _RouteList extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: DrsSpacing.md),
+          const NotificationsOptInCard(),
           if (groups.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: DrsSpacing.xl),

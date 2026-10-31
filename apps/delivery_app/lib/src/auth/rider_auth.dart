@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drs_api/drs_api.dart';
 import 'package:drs_api/drs_api_session.dart';
 import 'package:drs_core/drs_core.dart';
+import 'package:drs_ui/drs_ui.dart' show notificationsControllerProvider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../core/providers.dart';
@@ -92,6 +93,8 @@ class RiderAuth extends _$RiderAuth {
   }
 
   Future<void> signOut() async {
+    // Deactivate this device's push token while the session is still valid.
+    await ref.read(notificationsControllerProvider.notifier).signOut();
     final tokens = await _tokens.read();
     if (tokens != null) {
       try {

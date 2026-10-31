@@ -10,8 +10,13 @@ environment:
 
 dependencies:
   drs_core: ^0.1.0
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
   flutter:
     sdk: flutter
+  flutter_local_notifications: ^22.3.3
+  flutter_secure_storage: ^11.2.0
+  riverpod: ^3.4.3
 
 dev_dependencies:
   flutter_lints: ^6.0.0
@@ -19,6 +24,8 @@ dev_dependencies:
     sdk: flutter
 
 flutter:
+  # Widgets here use Material icons (also bundles the icon font for goldens).
+  uses-material-design: true
   # Bundled (OFL-licensed, see assets/fonts/OFL-*.txt) so the UI never fetches
   # fonts at runtime — works offline and makes no third-party requests.
   fonts:

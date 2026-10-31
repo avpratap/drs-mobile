@@ -39,7 +39,12 @@ ResponseBody _json(int status, Object body) => ResponseBody.fromString(
 );
 
 void main() {
-  const me = {'id': 7, 'phone': '+919876543210', 'role': 'customer', 'status': 'active'};
+  const me = {
+    'id': 7,
+    'phone': '+919876543210',
+    'role': 'customer',
+    'status': 'active',
+  };
 
   test('public operations carry no Authorization header', () async {
     final adapter = _FakeAdapter({
@@ -111,7 +116,10 @@ void main() {
   test('DrsApiError surfaces FastAPI detail without request data', () {
     final err = DrsApiError.from(
       DioException(
-        requestOptions: RequestOptions(path: '/x', data: {'phone': '+919876543210'}),
+        requestOptions: RequestOptions(
+          path: '/x',
+          data: {'phone': '+919876543210'},
+        ),
         type: DioExceptionType.badResponse,
         response: Response(
           requestOptions: RequestOptions(path: '/x'),

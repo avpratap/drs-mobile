@@ -1,6 +1,7 @@
 import 'package:drs_api/drs_api.dart';
 import 'package:drs_api/drs_api_session.dart';
 import 'package:drs_core/drs_core.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart' show Provider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/local/app_database.dart';
@@ -8,6 +9,9 @@ import 'secure_token_store.dart';
 import 'session_events.dart';
 
 part 'providers.g.dart';
+
+/// Wall clock (overridden in tests so time-of-day UI is deterministic).
+final clockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 
 /// Compile-time config (`--dart-define`). Override in tests.
 @Riverpod(keepAlive: true)
