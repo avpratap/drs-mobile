@@ -2,21 +2,53 @@
 
 The DRS customer app.
 
-## Milestone 1 scope
+## Features
 
-- **Shell** — `go_router` `StatefulShellRoute` with bottom navigation:
-  Home · Shop · Subscriptions · Account. Auth-aware redirects
-  (splash → sign-in → home).
-- **Phone-OTP sign-in** — `request_otp` → `verify_otp` (JWT pair saved to
-  secure storage) → `get_me`. In non-prod builds the backend's `dev_otp` is
-  offered as a one-tap fill. Refresh-on-401 is handled by `drs_api`; if the
-  refresh fails the app returns to sign-in.
-- **Catalogue** — Home ("Today's essentials", milk line first) and Shop
-  (search + category chips) read `list_products` through
-  `ProductRepository`: network → Drift cache; on failure the last good
-  snapshot is shown with an offline banner. The cache is shown instantly on
-  launch while the network refresh runs (stale-while-revalidate).
-- Subscriptions and Account sub-pages are placeholders for the next milestones.
+**Milestone 1** — adaptive shell (Home · Shop · Subscriptions · Account),
+phone-OTP sign-in, offline-first catalogue (Drift).
+
+**Milestone 2** — shopping and standing orders, all server-priced:
+
+- **Cart** — quick-add from catalogue cards (pack-size sheet) or the product
+  page (`get_product_full` variants: pack chips with `selling_price`, MRP
+  strike-through). The backend keeps one line per product with qty in the
+  product's unit, so a 1 L pack adds `qty 1`, two 500 ml packs add `qty 1`.
+  Header badge, per-line stepper (base packs), swipe to remove. Totals are
+  exactly what the server returns (`get_cart` + `cart_quote` for the GST
+  inside the GST-inclusive total) — the app never computes money.
+- **Checkout** — saved / new address (GST state list, PIN validation),
+  review with serviceability + ETA, `checkout_cart` with an
+  `Idempotency-Key` reused on retry, then `create_payment` →
+  Razorpay → `verify_payment`. Handles success, failure/cancel (order kept,
+  retry pays the same order), and pending (UPI app / lost connection while
+  verifying → "Check status", never shown as failed).
+- **Standing orders** — browse subscribable products, configure pack ×
+  count and cadence (daily / every N days / chosen weekdays), create the
+  home subscription (`create_subscription` + `set_subscription_items`),
+  tomorrow's plan, pause / resume / cancel, and skip a day
+  (`set_override` qty 0, date picker starts after the 23:00 IST cutoff).
+- **Wallet & orders** — balance + signed ledger; order history (Drift-cached
+  for offline), order detail with GST lines, tracking timeline + courier
+  events, pay-now for unpaid orders, cancel when the backend allows it.
+
+### Payments (Razorpay) — test mode only, no secrets
+
+The key used is the **publishable** key id (`rzp_test_…`); the secret
+never leaves the backend.
+
+| Build | Key used | Behaviour |
+|---|---|---|
+| `--dart-define=DRS_RAZORPAY_KEY_ID=rzp_test_…` | that key | Razorpay Standard Checkout (test mode) |
+| no define, backend has keys | backend `key_id` from `create_payment` | Razorpay checkout |
+| no define, backend in dev-stub mode, `DRS_ENV≠prod` | — | "Test payment" screen: simulate success / failure / pending against the backend stub (`signature: dev`) |
+| `DRS_ENV=prod` with no key anywhere | — | payment unavailable message; order kept |
+
+### Privacy
+
+The Drift cache stores the public catalogue plus order history and standing
+orders (for offline viewing); those two are wiped on sign-out. Wallet data
+and addresses are never cached. Razorpay checkout is opened without
+prefilled contact details.
 
 ## Layout
 
@@ -30,8 +62,12 @@ lib/
   src/features/
     auth/          data → application (AuthController) → presentation
     catalogue/     ProductRepository, catalogue stream, Home & Shop
-    subscriptions/ placeholder
-    account/       profile summary + sign out
+    cart/          CartController (serialised mutations), badge, pack picker
+    checkout/      addresses, CheckoutController state machine, Razorpay
+    orders/        history (cached), detail, tracking
+    wallet/        balance + ledger
+    subscriptions/ standing orders, cadence editor, skip/pause/resume
+    account/       profile, addresses, sign out
     shell/         bottom-nav shell, splash
 ```
 
@@ -54,8 +90,18 @@ dart run build_runner build --delete-conflicting-outputs   # riverpod + drift
 flutter test
 ```
 
-Tests use an in-memory Drift database and a scripted HTTP adapter — no
-network or device needed.
+Tests use an in-memory Drift database and `FakeDrsServer`, an in-memory
+model of the backend rules (server re-pricing, idempotent checkout, dev-stub
+payments, subscription templates/overrides) — no network or device needed.
+
+- `cart_flow_test`, `checkout_flow_test`, `subscription_flow_test`,
+  `wallet_orders_test` — end-to-end widget flows.
+- `responsive_test`, `commerce_responsive_test` — 6 devices (320 dp phone,
+  1.5× text, notched iPhone, Pixel, iPhone landscape, iPad) × Android/iOS:
+  no overflow, toolbars below the notch, sticky buttons above the home
+  indicator.
+- `goldens_test` (tag `golden`) — pixel snapshots with the real brand
+  fonts. After an intended UI change: `flutter test --update-goldens --tags golden`.
 
 ## Platforms
 
