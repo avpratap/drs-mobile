@@ -1,0 +1,8 @@
+# Files below are hand-maintained and must survive `make api-gen`.
+pubspec.yaml
+analysis_options.yaml
+README.md
+.gitignore
+test/**
+lib/drs_api_session.dart
+lib/src/session/**

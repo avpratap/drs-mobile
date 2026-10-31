@@ -1,0 +1,19 @@
+# openapi-generator config for packages/drs_api (dart-dio, json_serializable).
+# Used by `make api-gen`.
+generatorName: dart-dio
+inputSpec: openapi/drs-core.openapi.yaml
+outputDir: packages/drs_api
+additionalProperties:
+  pubName: drs_api
+  pubLibrary: drs_api
+  pubVersion: 0.1.0
+  pubDescription: Typed DRS API client generated from the drs-backend OpenAPI contract.
+  pubAuthor: DRS
+  pubAuthorEmail: engineering@example.invalid
+  pubHomepage: https://github.com/avpratap/drs-mobile
+  pubPublishTo: none
+  serializationLibrary: json_serializable
+  dateLibrary: core
+  sortModelPropertiesByRequiredFlag: true
+  skipCopyWith: true
+  enumUnknownDefaultCase: true
