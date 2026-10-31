@@ -4,17 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'auth/login_screen.dart';
 import 'auth/rider_auth.dart';
-import 'deliveries/todays_deliveries_screen.dart';
+import 'features/login_screen.dart';
+import 'features/map/map_screen.dart';
+import 'features/route/today_screen.dart';
+import 'features/stop/deliver_screen.dart';
+import 'features/stop/stop_detail_screen.dart';
+import 'routes.dart';
 
 part 'router.g.dart';
-
-abstract final class Routes {
-  static const splash = '/';
-  static const login = '/login';
-  static const today = '/today';
-}
 
 @Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
@@ -37,7 +35,7 @@ GoRouter router(Ref ref) {
       final a = auth.value;
       if (!a.loaded) return loc == Routes.splash ? null : Routes.splash;
       if (a.rider == null) return loc == Routes.login ? null : Routes.login;
-      return loc == Routes.today ? null : Routes.today;
+      return loc.startsWith(Routes.today) ? null : Routes.today;
     },
     routes: [
       GoRoute(
@@ -48,7 +46,22 @@ GoRouter router(Ref ref) {
       GoRoute(path: Routes.login, builder: (_, _) => const LoginScreen()),
       GoRoute(
         path: Routes.today,
-        builder: (_, _) => const TodaysDeliveriesScreen(),
+        builder: (_, _) => const TodayScreen(),
+        routes: [
+          GoRoute(path: 'map', builder: (_, _) => const MapScreen()),
+          GoRoute(
+            path: 'stop/:id',
+            builder: (_, s) =>
+                StopDetailScreen(orderId: int.parse(s.pathParameters['id']!)),
+            routes: [
+              GoRoute(
+                path: 'deliver',
+                builder: (_, s) =>
+                    DeliverScreen(orderId: int.parse(s.pathParameters['id']!)),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );

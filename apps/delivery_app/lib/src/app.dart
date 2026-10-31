@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'core/providers.dart';
+import 'features/sync/sync_triggers.dart';
 import 'router.dart';
 
 class DeliveryApp extends ConsumerWidget {
@@ -30,6 +31,7 @@ class DeliveryApp extends ConsumerWidget {
       darkTheme: DrsTheme.dark,
       themeMode: ThemeMode.light,
       routerConfig: ref.watch(routerProvider),
+      builder: (context, child) => SyncTriggers(child: child!),
     );
   }
 }

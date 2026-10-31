@@ -18,6 +18,8 @@
 	<!-- PLACEHOLDER copy: review with legal/product before release. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>DRS Delivery uses your location while you are on a route to order your stops and show customers when their delivery is near.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>DRS Delivery may use a photo from your library as proof of delivery when the camera is unavailable.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>DRS Delivery uses the camera to take proof-of-delivery photos.</string>
 	<!-- Background tracking (route milestone) would add "location" to UIBackgroundModes

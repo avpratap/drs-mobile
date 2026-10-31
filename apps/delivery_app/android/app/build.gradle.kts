@@ -8,6 +8,19 @@ plugins {
 
 // Release signing comes from android/key.properties (git-ignored; CI writes it from secrets).
 // Without it, release builds fall back to the debug key so `flutter run --release` works locally.
+// `flutter build/run --dart-define=K=V` reaches Gradle as the base64,
+// comma-separated `dart-defines` property. Reading the Maps key from it keeps
+// ONE source of truth for Dart and the Android manifest.
+val dartDefines: Map<String, String> =
+    (project.findProperty("dart-defines") as String?)
+        ?.split(",")
+        ?.mapNotNull { encoded ->
+            runCatching { String(java.util.Base64.getDecoder().decode(encoded)) }.getOrNull()
+        }
+        ?.mapNotNull { pair -> pair.split("=", limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }
+        ?.toMap()
+        ?: emptyMap()
+
 val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -33,9 +46,13 @@ android {
         // versionCode / versionName come from pubspec.yaml `version:`.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        // Never commit the key: pass it via env (CI secret) or ~/.gradle/gradle.properties.
+        // Never commit the key. Preferred: --dart-define=DRS_GOOGLE_MAPS_API_KEY=…
+        // (same value the Dart side checks); env var / Gradle property also work.
         manifestPlaceholders["googleMapsApiKey"] =
-            (System.getenv("DRS_GOOGLE_MAPS_API_KEY") ?: (project.findProperty("DRS_GOOGLE_MAPS_API_KEY") as String?) ?: "")
+            dartDefines["DRS_GOOGLE_MAPS_API_KEY"]
+                ?: System.getenv("DRS_GOOGLE_MAPS_API_KEY")
+                ?: (project.findProperty("DRS_GOOGLE_MAPS_API_KEY") as String?)
+                ?: ""
     }
 
     signingConfigs {
