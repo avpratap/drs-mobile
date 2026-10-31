@@ -13,6 +13,8 @@ export 'src/models/money.dart';
 export 'src/models/order.dart';
 export 'src/models/pack.dart';
 export 'src/models/product.dart';
+export 'src/models/profile.dart';
+export 'src/models/review.dart';
 export 'src/models/subscription.dart';
 export 'src/models/wallet.dart';
 export 'src/notifications/device_token_registrar.dart';

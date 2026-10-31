@@ -194,13 +194,26 @@ class _Items extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final l in order.lines)
+          for (final l in order.lines) ...[
             DrsSummaryRow(
               label:
                   '${index[l.productId]?.name ?? 'Item #${l.productId}'} · '
                   '${formatQty(l.qty, index[l.productId]?.uom ?? 'piece')}',
               value: l.lineTotal.format(compact: false),
             ),
+            // Delivered items can be reviewed (counts as a verified purchase).
+            if (order.status == OrderStatus.delivered)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: ValueKey('rate-${l.productId}'),
+                  onPressed: () =>
+                      context.push(Routes.writeReview(l.productId)),
+                  icon: const Icon(Icons.star_outline, size: 18),
+                  label: const Text('Rate this item'),
+                ),
+              ),
+          ],
           const Divider(height: DrsSpacing.lg),
           DrsTotals(
             subtotal: order.subtotal,

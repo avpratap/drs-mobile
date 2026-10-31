@@ -1,7 +1,6 @@
 abstract final class Routes {
   static const splash = '/splash';
   static const signIn = '/sign-in';
-  static const otp = '/sign-in/otp';
   static const home = '/home';
   static const shop = '/shop';
   static const subscriptions = '/subscriptions';
@@ -12,7 +11,10 @@ abstract final class Routes {
   static const checkout = '/cart/checkout';
   static const payOrder = '/pay';
   static const newAddress = '/addresses/new';
+  static const editAddress = '/addresses/edit';
   static String product(int id) => '/product/$id';
+  static String productReviews(int id) => '/product/$id/reviews';
+  static String writeReview(int id) => '/product/$id/review';
 
   // Inside tabs (keep the navigation bar).
   static const subscribeBrowse = '/subscriptions/add';
@@ -21,4 +23,6 @@ abstract final class Routes {
   static String order(int id) => '/account/orders/$id';
   static const wallet = '/account/wallet';
   static const addresses = '/account/addresses';
+  static const profile = '/account/profile';
+  static const notificationPrefs = '/account/notifications';
 }

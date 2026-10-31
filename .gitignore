@@ -29,3 +29,4 @@ env/*.json
 
 # Local tool downloads (openapi-generator jar)
 .tools/
+**/test/failures/

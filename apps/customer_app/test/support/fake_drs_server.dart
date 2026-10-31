@@ -127,6 +127,90 @@ class FakeDrsServer implements HttpClientAdapter {
   /// Active push tokens → platform.
   final deviceTokens = <String, String>{};
 
+  // --- account -----------------------------------------------------------
+  final profile = <String, Object?>{
+    'user_id': 7,
+    'phone': '+919876543210',
+    'email': 'asha@example.com',
+    'email_verified': true,
+    'full_name': 'Asha Devi',
+    'display_name': 'Asha',
+    'notify_push': true,
+    'notify_sms': true,
+    'notify_whatsapp': false,
+    'notify_email': false,
+    'marketing_opt_in': false,
+  };
+
+  /// Consent ledger: purpose → granted | withdrawn.
+  final consents = <String, String>{};
+
+  // --- reviews -----------------------------------------------------------
+  /// productId → reviews (RatingOut JSON, incl. `user_id` of the author).
+  final ratings = <int, List<Map<String, Object?>>>{};
+  final _helpfulVotes = <int>{};
+  int _nextRatingId = 500;
+
+  /// The signed-in customer's user id (matches `/auth/me`).
+  static const me = 7;
+
+  /// Products the customer has received (reviews are verified purchases).
+  final purchased = <int>{1};
+
+  /// Adds someone else's approved review (test setup).
+  void seedReview(
+    int productId,
+    int stars, {
+    String? comment,
+    int helpful = 0,
+    String? reply,
+  }) {
+    ratings.putIfAbsent(productId, () => []).add({
+      'id': _nextRatingId++,
+      'user_id': 100 + _nextRatingId,
+      'product_id': productId,
+      'stars': stars,
+      'comment': comment,
+      'status': 'approved',
+      'verified_purchase': true,
+      'helpful_count': helpful,
+      'admin_reply': reply,
+    });
+  }
+
+  Map<String, Object?> _ratingsOut(int pid, String? sort) {
+    final all = ratings[pid] ?? const <Map<String, Object?>>[];
+    final approved = all.where((r) => r['status'] == 'approved').toList();
+    final visible = [
+      for (final r in all)
+        if (r['status'] == 'approved' || r['user_id'] == me) _ratingOut(r),
+    ];
+    if (sort == 'helpful') {
+      visible.sort(
+        (a, b) => (b['helpful_count']! as int) - (a['helpful_count']! as int),
+      );
+    } else {
+      visible.sort((a, b) => (b['id']! as int) - (a['id']! as int));
+    }
+    final sum = approved.fold<int>(0, (t, r) => t + (r['stars']! as int));
+    return {
+      'product_id': pid,
+      'count': approved.length,
+      'average': approved.isEmpty ? 0 : sum / approved.length,
+      'distribution': {
+        for (var i = 1; i <= 5; i++)
+          '$i': approved.where((r) => r['stars'] == i).length,
+      },
+      'ratings': visible,
+    };
+  }
+
+  /// The backend withholds `user_id` except for the author.
+  Map<String, Object?> _ratingOut(Map<String, Object?> r) {
+    final mine = r['user_id'] == me;
+    return {...r, 'user_id': mine ? me : null, 'mine': mine};
+  }
+
   /// Puts [qty] of [productId] in the cart (test setup).
   void seedCart(int productId, double qty) {
     cart[productId] = qty;
@@ -267,6 +351,76 @@ class FakeDrsServer implements HttpClientAdapter {
       deviceTokens.remove(b['token']);
       return (204, '');
     }
+    // profile & consents
+    if (p == '/api/v1/profile') {
+      if (m == 'PATCH') {
+        if (b.containsKey('email') && b['email'] != profile['email']) {
+          profile['email_verified'] = false;
+        }
+        profile.addAll({for (final e in b.entries) e.key: e.value});
+      }
+      return (200, profile);
+    }
+    if (p == '/api/v1/consents' && m == 'GET') return (200, consents);
+    if (p == '/api/v1/consents' && m == 'POST') {
+      consents[b['purpose']! as String] = b['action']! as String;
+      profile['marketing_opt_in'] = consents.values.contains('granted');
+      return (
+        201,
+        {
+          'id': consents.length,
+          'purpose': b['purpose'],
+          'action': b['action'],
+          'source': 'app',
+          'created_at': '2026-11-01T08:00:00Z',
+        },
+      );
+    }
+    // reviews
+    if (match(r'/api/v1/products/(\d+)/ratings/(\d+)/helpful') case final mm?) {
+      final pid = int.parse(mm[1]!);
+      final rid = int.parse(mm[2]!);
+      final r = ratings[pid]!.firstWhere((x) => x['id'] == rid);
+      if (r['user_id'] == me) {
+        return (409, {'detail': 'You cannot vote on your own review'});
+      }
+      final voted = _helpfulVotes.add(rid);
+      if (!voted) _helpfulVotes.remove(rid);
+      r['helpful_count'] = (r['helpful_count']! as int) + (voted ? 1 : -1);
+      return (
+        200,
+        {'rating_id': rid, 'helpful_count': r['helpful_count'], 'voted': voted},
+      );
+    }
+    if (match(r'/api/v1/products/(\d+)/ratings') case final mm?) {
+      final pid = int.parse(mm[1]!);
+      final list = ratings.putIfAbsent(pid, () => []);
+      switch (m) {
+        case 'GET':
+          return (200, _ratingsOut(pid, c.query['sort'] as String?));
+        case 'DELETE':
+          final had = list.any((r) => r['user_id'] == me);
+          list.removeWhere((r) => r['user_id'] == me);
+          return had ? (204, '') : (404, {'detail': 'Rating not found'});
+        default:
+          final stars = b['stars']! as int;
+          if (stars < 1 || stars > 5) return (422, {'detail': 'stars 1..5'});
+          final bought = purchased.contains(pid);
+          final existing = list.where((r) => r['user_id'] == me).firstOrNull;
+          final r = existing ?? {'id': _nextRatingId++, 'user_id': me};
+          r.addAll({
+            'product_id': pid,
+            'stars': stars,
+            'comment': b['comment'],
+            // Non-buyers are held for moderation.
+            'status': bought ? 'approved' : 'pending',
+            'verified_purchase': bought,
+            'helpful_count': r['helpful_count'] ?? 0,
+          });
+          if (existing == null) list.add(r);
+          return (200, _ratingOut(r));
+      }
+    }
     // catalogue
     if (m == 'GET' && p == '/api/v1/products') return (200, products);
     if (match(r'/api/v1/products/(\d+)/full') case final mm?) {
@@ -403,9 +557,19 @@ class FakeDrsServer implements HttpClientAdapter {
     // addresses
     if (p == '/api/v1/addresses' && m == 'GET') return (200, addresses);
     if (p == '/api/v1/addresses' && m == 'POST') {
+      if (b['is_default'] == true) {
+        for (final x in addresses) {
+          x['is_default'] = false;
+        }
+      }
       final a = {
         ...b,
-        'id': addresses.length + 1,
+        'id':
+            addresses.fold<int>(
+              0,
+              (t, a) => a['id']! as int > t ? a['id']! as int : t,
+            ) +
+            1,
         'account_id': 1,
         'status': 'active',
         'country': 'IN',
@@ -413,6 +577,32 @@ class FakeDrsServer implements HttpClientAdapter {
       };
       addresses.add(a);
       return (201, a);
+    }
+    if (match(r'/api/v1/addresses/(\d+)/default') case final mm?) {
+      final id = int.parse(mm[1]!);
+      for (final a in addresses) {
+        a['is_default'] = a['id'] == id;
+      }
+      return (200, addresses.firstWhere((a) => a['id'] == id));
+    }
+    if (match(r'/api/v1/addresses/(\d+)') case final mm?) {
+      final id = int.parse(mm[1]!);
+      final a = addresses.where((x) => x['id'] == id).firstOrNull;
+      if (a == null) return (404, {'detail': 'Address not found'});
+      if (m == 'DELETE') {
+        addresses.remove(a);
+        if (a['is_default'] == true && addresses.isNotEmpty) {
+          addresses.first['is_default'] = true;
+        }
+        return (204, '');
+      }
+      if (b['is_default'] == true) {
+        for (final x in addresses) {
+          x['is_default'] = false;
+        }
+      }
+      a.addAll({for (final e in b.entries) e.key: e.value});
+      return (200, a);
     }
     // billing
     if (p == '/api/v1/billing/me') {

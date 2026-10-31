@@ -47,7 +47,7 @@ void main() {
   });
 
   testWidgets('opt-in on Home → OS prompt → token registered with the '
-      'backend; Account shows it on', (t) async {
+      'backend; Notifications shows it on', (t) async {
     setDevice(t, const Size(412, 915));
     final push = FakePushPlatform();
     final h = Harness(server: seededServer(), push: push);
@@ -67,7 +67,7 @@ void main() {
     ); // token only in the body
     expect(find.byType(DrsNotificationOptIn), findsNothing);
 
-    await goTo(t, Routes.account);
+    await goTo(t, Routes.notificationPrefs);
     expect(find.text('On for this device'), findsOneWidget);
   });
 
@@ -81,7 +81,7 @@ void main() {
     await t.tap(find.text('Allow notifications'));
     await t.pumpAndSettle();
     expect(h.server.deviceTokens, isEmpty);
-    await goTo(t, Routes.account);
+    await goTo(t, Routes.notificationPrefs);
     expect(find.textContaining('Blocked in system settings'), findsOneWidget);
   });
 
