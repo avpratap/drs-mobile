@@ -22,5 +22,6 @@ export 'src/widgets/drs_otp_sign_in.dart';
 export 'src/widgets/drs_price.dart';
 export 'src/widgets/drs_product_card.dart';
 export 'src/widgets/drs_quantity_stepper.dart';
+export 'src/widgets/drs_ratings.dart';
 export 'src/widgets/drs_scaffold.dart';
 export 'src/widgets/drs_states.dart';
