@@ -119,7 +119,7 @@ class _Categories extends HookConsumerWidget {
     return Card(
       child: Column(
         children: [
-          SwitchListTile(
+          DrsSwitchTile(
             key: const ValueKey('pref-service'),
             secondary: const Icon(Icons.local_shipping_outlined),
             title: const Text('Orders, deliveries & account'),
@@ -137,7 +137,7 @@ class _Categories extends HookConsumerWidget {
                   ),
           ),
           const Divider(height: 1),
-          SwitchListTile(
+          DrsSwitchTile(
             key: const ValueKey('pref-offers'),
             secondary: const Icon(Icons.local_offer_outlined),
             title: const Text('Offers & promotions'),

@@ -42,13 +42,16 @@ class StopDetailScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(DrsSpacing.md),
               children: [
-                Row(
+                // Wraps under large text instead of overflowing.
+                Wrap(
+                  spacing: DrsSpacing.sm,
+                  runSpacing: DrsSpacing.xs,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       'Stop ${s.sequence}',
                       style: theme.textTheme.titleMedium,
                     ),
-                    const SizedBox(width: DrsSpacing.sm),
                     StopStatusChip(view: view),
                   ],
                 ),

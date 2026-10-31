@@ -38,7 +38,11 @@ class DrsQuantityStepper extends StatelessWidget {
       return FilledButton.tonalIcon(
         onPressed: enabled && max > 0 ? () => _change(1) : null,
         icon: const Icon(Icons.add, size: 18),
-        label: Text(addLabel),
+        // Screen readers hear which product ("Add Cow Milk 500 ml").
+        label: Text(
+          addLabel,
+          semanticsLabel: itemLabel == 'item' ? null : '$addLabel $itemLabel',
+        ),
         style: FilledButton.styleFrom(
           backgroundColor: scheme.primaryContainer,
           foregroundColor: scheme.onPrimaryContainer,

@@ -1,5 +1,6 @@
 import 'package:customer_app/src/routing/routes.dart';
 import 'package:drs_core/drs_core.dart';
+import 'package:drs_ui/drs_ui.dart';
 import 'package:drs_ui/testing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -156,20 +157,20 @@ void main() {
       expect(find.text('This device'), findsOneWidget);
       final service = find.byKey(const ValueKey('pref-service'));
       final offers = find.byKey(const ValueKey('pref-offers'));
-      expect(t.widget<SwitchListTile>(service).value, isTrue);
-      expect(t.widget<SwitchListTile>(offers).value, isFalse);
+      expect(t.widget<DrsSwitchTile>(service).value, isTrue);
+      expect(t.widget<DrsSwitchTile>(offers).value, isFalse);
 
       await t.tap(offers);
       await t.pumpAndSettle();
       expect(h.server.consents, {ConsentPurpose.marketingPush: 'granted'});
-      expect(t.widget<SwitchListTile>(offers).value, isTrue);
+      expect(t.widget<DrsSwitchTile>(offers).value, isTrue);
 
       await t.tap(service);
       await t.pumpAndSettle();
       expect(h.server.callsTo('PATCH /api/v1/profile').single.body, {
         'notify_push': false,
       });
-      expect(t.widget<SwitchListTile>(service).value, isFalse);
+      expect(t.widget<DrsSwitchTile>(service).value, isFalse);
 
       // Withdraw marketing consent again.
       await t.tap(offers);
@@ -211,7 +212,7 @@ void main() {
       final offers = find.byKey(const ValueKey('pref-offers'));
       await t.tap(offers);
       await t.pumpAndSettle();
-      expect(t.widget<SwitchListTile>(offers).value, isFalse);
+      expect(t.widget<DrsSwitchTile>(offers).value, isFalse);
       expect(find.byType(SnackBar), findsOneWidget);
     });
   });

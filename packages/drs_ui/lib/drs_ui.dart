@@ -27,3 +27,4 @@ export 'src/widgets/drs_quantity_stepper.dart';
 export 'src/widgets/drs_ratings.dart';
 export 'src/widgets/drs_scaffold.dart';
 export 'src/widgets/drs_states.dart';
+export 'src/widgets/drs_toggles.dart';

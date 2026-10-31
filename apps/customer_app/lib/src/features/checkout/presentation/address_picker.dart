@@ -34,24 +34,30 @@ class AddressPicker extends ConsumerWidget {
       builder: (list) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          RadioGroup<int>(
-            groupValue: selected?.id,
-            onChanged: (id) => onSelected(list.firstWhere((a) => a.id == id)),
-            child: Column(
-              children: [
-                for (final a in list)
-                  RadioListTile<int>(
-                    value: a.id,
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(a.title),
-                    subtitle: Text(a.oneLine),
-                    secondary: a.isDefault
-                        ? const DrsStatusChip(label: 'Default')
-                        : null,
+          // One focus stop per address, announced as a radio item
+          // ("Home, 12 Gandhi Path…, Default, checked").
+          for (final a in list)
+            Semantics(
+              inMutuallyExclusiveGroup: true,
+              checked: a.id == selected?.id,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: ExcludeSemantics(
+                  child: Icon(
+                    a.id == selected?.id
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
-              ],
+                ),
+                title: Text(a.title),
+                subtitle: Text(a.oneLine),
+                trailing: a.isDefault
+                    ? const DrsStatusChip(label: 'Default')
+                    : null,
+                onTap: () => onSelected(a),
+              ),
             ),
-          ),
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: DrsButton(

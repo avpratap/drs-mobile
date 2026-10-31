@@ -20,12 +20,15 @@ class DrsCartButton extends StatelessWidget {
   Widget build(BuildContext context) => IconButton(
     tooltip: count == 0 ? 'Cart' : 'Cart, $count items',
     onPressed: onPressed,
-    icon: Badge.count(
-      count: count,
-      isLabelVisible: count > 0,
-      backgroundColor: Theme.of(context).colorScheme.secondary,
-      textColor: Theme.of(context).colorScheme.onSecondary,
-      child: const Icon(Icons.shopping_bag_outlined),
+    // The tooltip already says "Cart, N items"; don't also read the badge.
+    icon: ExcludeSemantics(
+      child: Badge.count(
+        count: count,
+        isLabelVisible: count > 0,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        textColor: Theme.of(context).colorScheme.onSecondary,
+        child: const Icon(Icons.shopping_bag_outlined),
+      ),
     ),
   );
 }
