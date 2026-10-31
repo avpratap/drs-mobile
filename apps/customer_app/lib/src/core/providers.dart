@@ -12,6 +12,10 @@ import 'session_events.dart';
 
 part 'providers.g.dart';
 
+/// Network images on/off (widget tests turn them off: no HTTP, no disk
+/// cache plugin).
+final networkImagesProvider = Provider<bool>((_) => true);
+
 /// Wall clock (overridden in tests so time-of-day UI is deterministic).
 final clockProvider = Provider<DateTime Function()>((_) => DateTime.now);
 

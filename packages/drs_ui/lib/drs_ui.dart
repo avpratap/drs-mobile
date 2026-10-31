@@ -18,6 +18,7 @@ export 'src/widgets/drs_button.dart';
 export 'src/widgets/drs_commerce.dart';
 export 'src/widgets/drs_inputs.dart';
 export 'src/widgets/drs_logo.dart';
+export 'src/widgets/drs_network_image.dart';
 export 'src/widgets/drs_notifications.dart';
 export 'src/widgets/drs_otp_sign_in.dart';
 export 'src/widgets/drs_price.dart';

@@ -87,6 +87,7 @@ class Harness {
       ),
       tokenStoreProvider.overrideWithValue(tokens),
       // Fixed 8 am so time-of-day UI (greeting) is deterministic in goldens.
+      networkImagesProvider.overrideWithValue(false),
       clockProvider.overrideWithValue(() => DateTime(2026, 11, 1, 8)),
       appDatabaseProvider.overrideWithValue(db),
       drsApiProvider.overrideWithValue(

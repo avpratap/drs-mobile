@@ -32,7 +32,11 @@ class CustomerApp extends ConsumerWidget {
       // Light is the reference brand experience; dark is opt-in for now.
       themeMode: ThemeMode.light,
       routerConfig: ref.watch(appRouterProvider),
-      builder: (context, child) => PushBridge(child: child!),
+      builder: (context, child) => DrsMedia(
+        apiBaseUrl: env.apiBaseUrl,
+        enabled: ref.watch(networkImagesProvider),
+        child: PushBridge(child: child!),
+      ),
     );
   }
 }

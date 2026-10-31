@@ -1,0 +1,23 @@
+{
+  "sku": "CHAAS-200",
+  "name": "Buttermilk (Chaas) 200ml",
+  "description": null,
+  "uom": "litre",
+  "pack_size": 0.2,
+  "is_subscribable": true,
+  "perishable": true,
+  "hsn_code": "0403",
+  "gst_rate": 0.0,
+  "category": "buttermilk",
+  "image_url": "/files/storefront-demo/products/buttermilk-photo.jpg",
+  "id": 3,
+  "status": "active",
+  "from_price": 8.0,
+  "avg_rating": 4.0,
+  "rating_count": 3,
+  "weight_kg": null,
+  "length_cm": null,
+  "width_cm": null,
+  "height_cm": null,
+  "variants": []
+}

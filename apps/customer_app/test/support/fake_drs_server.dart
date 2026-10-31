@@ -1,9 +1,37 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
 import 'fake_backend.dart';
+
+/// Live catalogue fixtures from `packages/drs_api/test/fixtures/live`.
+class LiveCatalogue {
+  LiveCatalogue._(this.list, this._full);
+
+  static LiveCatalogue load() {
+    Object? read(String name) => jsonDecode(
+      File('../../packages/drs_api/test/fixtures/live/$name.json')
+          .readAsStringSync(),
+    );
+    final list = (read('products')! as List).cast<Map<String, Object?>>();
+    final full = <int, Map<String, Object?>>{
+      for (final id in [1, 3])
+        id: (read('products_${id}_full')! as Map).cast<String, Object?>(),
+    };
+    return LiveCatalogue._(list, full);
+  }
+
+  final List<Map<String, Object?>> list;
+  final Map<int, Map<String, Object?>> _full;
+
+  /// Captured detail when we have it, else the list row without variants
+  /// (which is what the live backend returns for products 3, 5 and 6).
+  Map<String, Object?> full(int id) =>
+      _full[id] ??
+      {...list.firstWhere((p) => p['id'] == id), 'variants': const []};
+}
 
 /// A recorded request.
 class Call {
@@ -123,6 +151,10 @@ class FakeDrsServer implements HttpClientAdapter {
   final overrides = <String>[]; // "pid@yyyy-mm-dd:qty"
 
   double walletBalance = 250;
+
+  /// When set, the catalogue is served from responses captured from the live
+  /// backend (relative image paths, lowercase slugs, variant-less products).
+  LiveCatalogue? liveCatalogue;
 
   /// Active push tokens → platform.
   final deviceTokens = <String, String>{};
@@ -422,9 +454,12 @@ class FakeDrsServer implements HttpClientAdapter {
       }
     }
     // catalogue
-    if (m == 'GET' && p == '/api/v1/products') return (200, products);
+    if (m == 'GET' && p == '/api/v1/products') {
+      return (200, liveCatalogue?.list ?? products);
+    }
     if (match(r'/api/v1/products/(\d+)/full') case final mm?) {
       final id = int.parse(mm[1]!);
+      if (liveCatalogue case final live?) return (200, live.full(id));
       final prod = products.firstWhere((x) => x['id'] == id);
       return (200, {...prod, 'variants': variants[id] ?? const []});
     }

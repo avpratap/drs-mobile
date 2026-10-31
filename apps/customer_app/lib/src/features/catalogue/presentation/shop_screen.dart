@@ -1,3 +1,4 @@
+import 'package:drs_core/drs_core.dart';
 import 'package:drs_ui/drs_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -65,7 +66,7 @@ class ShopScreen extends HookConsumerWidget {
                         ),
                         for (final c in categories)
                           _CategoryChip(
-                            label: c,
+                            label: categoryLabel(c),
                             selected: category.value == c,
                             onSelected: () => category.value = c,
                           ),

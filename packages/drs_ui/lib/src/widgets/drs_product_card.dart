@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/drs_colors.dart';
 import '../theme/drs_spacing.dart';
+import 'drs_network_image.dart';
 import 'drs_price.dart';
 
 /// Catalogue row. The left accent + image tint use `sky` for the milk /
@@ -113,16 +114,12 @@ class _Thumb extends StatelessWidget {
         height: 64,
         color: tint,
         alignment: Alignment.center,
-        child: url == null || url!.isEmpty
-            ? placeholder
-            : Image.network(
-                url!,
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-                excludeFromSemantics: true,
-                errorBuilder: (_, _, _) => placeholder,
-              ),
+        child: DrsNetworkImage(
+          url: url,
+          width: 64,
+          height: 64,
+          placeholder: placeholder,
+        ),
       ),
     );
   }
