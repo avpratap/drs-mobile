@@ -123,11 +123,31 @@ python3 tool/make_brand_assets.py      # re-render branding/*.png
 tool/launcher_assets/generate.sh       # regenerate platform icons + splash
 ```
 
+## Smoke test against the live backend
+
+`packages/drs_api/tool/smoke_live.dart` drives the generated, typed client
+against a running backend (default: the live one). It is read-only, prints
+only step names, status and counts (no phones, OTPs, tokens or personal
+data), and fails on any HTTP error or contract mismatch.
+
+```bash
+cd packages/drs_api
+dart run tool/smoke_live.dart                                  # public catalogue + reviews
+SMOKE_CUSTOMER_PHONE=<test customer> SMOKE_RIDER_PHONE=9999900003 \
+  dart run tool/smoke_live.dart                                # + sign-in flows
+dart run tool/smoke_live.dart http://localhost:8000            # any other backend
+```
+
+Sign-in steps need a backend that returns `dev_otp` (non-prod); against a
+prod backend they are skipped. The first request may take ~1 min while a
+free-tier host wakes up.
+
 ## Pre-release checklist
 
 - [ ] CI green (analyze, tests, goldens, Android dev/prod, iOS dev/prod)
 - [ ] `env/prod.json` filled; Firebase apps registered for the prod ids
 - [ ] `DRS_PRIVACY_URL` and `DRS_GRIEVANCE_EMAIL` set
-- [ ] Smoke test the prod build against the live backend (sign in, browse,
-      cart, checkout with a Razorpay test key first)
+- [ ] `tool/smoke_live.dart` passes against the live backend
+- [ ] Manual pass on the prod build against the live backend (sign in,
+      browse, cart, checkout with a Razorpay test key first)
 - [ ] Version/build number bumped
