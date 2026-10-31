@@ -26,13 +26,12 @@ final pushRouteResolverProvider = Provider<PushRouteResolver>(
       (_) => null,
 );
 
-/// Whether a user session exists (apps bind this to their auth state).
-final pushSignedInProvider = Provider<bool>((_) => false);
-
 @immutable
 class NotificationsState {
   const NotificationsState({
     this.started = false,
+    this.ready = false,
+    this.signedIn = false,
     this.available = false,
     this.permission = PushPermission.notDetermined,
     this.consent,
@@ -42,6 +41,12 @@ class NotificationsState {
   });
 
   final bool started;
+
+  /// The platform finished initialising (token/permission are meaningful).
+  final bool ready;
+
+  /// A user session exists (set by the app via `setSignedIn`).
+  final bool signedIn;
   final bool available;
   final PushPermission permission;
 
@@ -63,6 +68,8 @@ class NotificationsState {
 
   NotificationsState copyWith({
     bool? started,
+    bool? ready,
+    bool? signedIn,
     bool? available,
     PushPermission? permission,
     bool? consent,
@@ -73,6 +80,8 @@ class NotificationsState {
     PushPayload? lastForeground,
   }) => NotificationsState(
     started: started ?? this.started,
+    ready: ready ?? this.ready,
+    signedIn: signedIn ?? this.signedIn,
     available: available ?? this.available,
     permission: permission ?? this.permission,
     consent: clearConsent ? null : (consent ?? this.consent),
@@ -103,16 +112,20 @@ class NotificationsController extends Notifier<NotificationsState> {
 
   @override
   NotificationsState build() {
-    ref
-      ..listen(pushSignedInProvider, (_, signedIn) {
-        if (signedIn) unawaited(_refreshAndSync());
-      })
-      ..onDispose(() {
-        for (final s in _subs) {
-          unawaited(s.cancel());
-        }
-      });
+    ref.onDispose(() {
+      for (final s in _subs) {
+        unawaited(s.cancel());
+      }
+    });
     return const NotificationsState();
+  }
+
+  /// The app reports its session (the controller deliberately doesn't watch
+  /// app auth, so auth code can call [signOut] without a provider cycle).
+  Future<void> setSignedIn(bool signedIn) async {
+    if (signedIn == state.signedIn) return;
+    state = state.copyWith(signedIn: signedIn);
+    if (signedIn) await _refreshAndSync();
   }
 
   /// Initialises the platform and handles a launch-from-notification. Safe
@@ -127,6 +140,7 @@ class NotificationsController extends Notifier<NotificationsState> {
     } on Object {
       return; // Misconfigured Firebase: stay disabled rather than crash.
     }
+    if (!ref.mounted) return;
     _subs
       ..add(p.opened.listen(_open))
       ..add(
@@ -139,8 +153,10 @@ class NotificationsController extends Notifier<NotificationsState> {
       ..add(p.tokenRefresh.listen((_) => unawaited(_sync())));
     state = state.copyWith(
       available: true,
+      ready: true,
       permission: await p.permission(),
       consent: await _prefs.consent(),
+      registered: await _prefs.registeredToken() != null,
     );
     final initial = await p.initialOpen();
     if (initial != null) _open(initial);
@@ -204,14 +220,18 @@ class NotificationsController extends Notifier<NotificationsState> {
 
   Future<void> _sync() async {
     final registrar = _registrar;
-    if (registrar == null) return;
-    final token = state.available && state.permission.canReceive
-        ? await _platform.token()
-        : null;
-    await registrar.sync(
-      signedIn: ref.read(pushSignedInProvider),
-      token: token,
-    );
+    // Never touch server state before the platform is ready: a token that
+    // merely isn't known yet must not deactivate a valid registration.
+    if (registrar == null || !state.ready) return;
+    final eligible =
+        state.signedIn &&
+        (await _prefs.consent() ?? false) &&
+        state.permission.canReceive;
+    final token = eligible ? await _platform.token() : null;
+    // Eligible but no token yet (e.g. iOS before APNs answers): wait for
+    // onTokenRefresh instead of unregistering.
+    if (eligible && token == null) return;
+    await registrar.sync(signedIn: state.signedIn, token: token);
     if (!ref.mounted) return;
     state = state.copyWith(registered: await _prefs.registeredToken() != null);
   }

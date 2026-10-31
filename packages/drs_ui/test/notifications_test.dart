@@ -1,59 +1,14 @@
-import 'dart:async';
-
 import 'package:drs_core/drs_core.dart';
 import 'package:drs_ui/drs_ui.dart';
+import 'package:drs_ui/testing.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:riverpod/legacy.dart';
 import 'package:riverpod/riverpod.dart';
-
-class FakePushPlatform implements PushPlatform {
-  FakePushPlatform({this.grant = PushPermission.granted});
-
-  PushPermission grant;
-  PushPermission current = PushPermission.notDetermined;
-  String? currentToken = 't' * 160;
-  Map<String, Object?>? launchedWith;
-  int prompts = 0;
-  int deletes = 0;
-  final openedCtl = StreamController<Map<String, Object?>>.broadcast();
-  final refreshCtl = StreamController<String>.broadcast();
-  final fgCtl = StreamController<PushMessage>.broadcast();
-
-  @override
-  bool get available => true;
-  @override
-  String get platformName => 'ios';
-  @override
-  Future<void> init() async {}
-  @override
-  Future<PushPermission> permission() async => current;
-  @override
-  Future<PushPermission> requestPermission() async {
-    prompts++;
-    return current = grant;
-  }
-
-  @override
-  Future<String?> token() async => currentToken;
-  @override
-  Stream<String> get tokenRefresh => refreshCtl.stream;
-  @override
-  Stream<PushMessage> get foreground => fgCtl.stream;
-  @override
-  Stream<Map<String, Object?>> get opened => openedCtl.stream;
-  @override
-  Future<Map<String, Object?>?> initialOpen() async => launchedWith;
-  @override
-  Future<void> deleteToken() async => deletes++;
-}
 
 void main() {
   late FakePushPlatform platform;
   late List<String> api;
   late InMemoryPushPrefs prefs;
   late ProviderContainer c;
-  var signedIn = false;
-  final signedInProvider = StateProvider<bool>((_) => signedIn);
 
   ProviderContainer make() => ProviderContainer(
     overrides: [
@@ -65,7 +20,6 @@ void main() {
           unregister: (t) async => api.add('unregister ${t.substring(0, 1)}'),
         ),
       ),
-      pushSignedInProvider.overrideWith((ref) => ref.watch(signedInProvider)),
       pushRouteResolverProvider.overrideWithValue(
         (p) => p.orderId == null ? null : '/orders/${p.orderId}',
       ),
@@ -80,7 +34,6 @@ void main() {
     platform = FakePushPlatform();
     api = [];
     prefs = InMemoryPushPrefs();
-    signedIn = false;
     c = make();
     addTearDown(c.dispose);
     // Riverpod 3 pauses providers nobody listens to (apps watch it from the
@@ -101,8 +54,7 @@ void main() {
     expect(platform.prompts, 1);
     expect(api, isEmpty);
 
-    c.read(signedInProvider.notifier).state = true;
-    await pumpEventQueue();
+    await ctl().setSignedIn(true);
     expect(api, ['register t ios']);
     expect(state().registered, isTrue);
     expect(state().enabled, isTrue);
@@ -112,7 +64,7 @@ void main() {
     'denied permission is handled: no registration, explained state',
     () async {
       platform.grant = PushPermission.denied;
-      c.read(signedInProvider.notifier).state = true;
+      await ctl().setSignedIn(true);
       await ctl().start();
       await ctl().enable();
       expect(api, isEmpty);
@@ -124,7 +76,7 @@ void main() {
   );
 
   test('token refresh rotates the registration; opt-out unregisters', () async {
-    c.read(signedInProvider.notifier).state = true;
+    await ctl().setSignedIn(true);
     await ctl().start();
     await ctl().enable();
     platform.currentToken = 'u' * 160;
@@ -141,7 +93,7 @@ void main() {
   test(
     'sign-out unregisters (session still valid) and forgets consent',
     () async {
-      c.read(signedInProvider.notifier).state = true;
+      await ctl().setSignedIn(true);
       await ctl().start();
       await ctl().enable();
       await ctl().signOut();
@@ -174,5 +126,33 @@ void main() {
     final s = c2.read(notificationsControllerProvider);
     expect(s.available, isFalse);
     expect(s.shouldOfferOptIn, isFalse);
+  });
+
+  test(
+    'a token that is not available yet never unregisters a valid one',
+    () async {
+      await ctl().setSignedIn(true);
+      await ctl().start();
+      await ctl().enable();
+      expect(api, ['register t ios']);
+      // Next launch: iOS hasn't produced the APNs/FCM token yet.
+      platform.currentToken = null;
+      final c2 = make();
+      addTearDown(c2.dispose);
+      c2.listen(notificationsControllerProvider, (_, _) {});
+      await c2.read(notificationsControllerProvider.notifier).setSignedIn(true);
+      await c2.read(notificationsControllerProvider.notifier).start();
+      expect(api, ['register t ios']); // no unregister
+      expect(c2.read(notificationsControllerProvider).registered, isTrue);
+    },
+  );
+
+  test('session reported before start: nothing happens until ready', () async {
+    await prefs.setConsent(true);
+    platform.current = PushPermission.granted;
+    await ctl().setSignedIn(true); // before start()
+    expect(api, isEmpty);
+    await ctl().start();
+    expect(api, ['register t ios']);
   });
 }
