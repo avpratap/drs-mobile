@@ -1,0 +1,58 @@
+name: drs_mobile_workspace
+description: DRS Flutter monorepo (Melos + pub workspaces).
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+workspace:
+  - apps/customer_app
+  - apps/delivery_app
+  - packages/drs_api
+  - packages/drs_core
+  - packages/drs_ui
+
+dev_dependencies:
+  melos: ^8.10.0
+
+melos:
+  repository: https://github.com/avpratap/drs-mobile
+
+  command:
+    bootstrap:
+      # Pub workspaces resolve everything in one `pub get` at the root.
+      runPubGetInParallel: false
+
+  scripts:
+    analyze:
+      description: Static analysis across every package (must be zero issues).
+      exec:
+        command: flutter analyze --no-pub .
+        concurrency: 1
+        failFast: true
+
+    format:
+      description: Check formatting of hand-written code (generated client excluded).
+      exec:
+        command: dart format --output=none --set-exit-if-changed lib test
+        concurrency: 4
+      packageFilters:
+        ignore: [drs_api]
+
+    test:
+      description: Run tests in every package that has a test/ directory.
+      exec:
+        command: flutter test --no-pub
+        concurrency: 1
+        failFast: true
+      packageFilters:
+        dirExists: test
+
+    gen:
+      description: Run build_runner (json_serializable, drift, riverpod_generator).
+      exec:
+        command: dart run build_runner build
+        concurrency: 1
+        orderDependents: true
+      packageFilters:
+        dependsOn: build_runner

@@ -1,6 +1,31 @@
+# Dart / Flutter
 .dart_tool/
 build/
-.flutter-plugins*
-.env
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+coverage/
 *.log
 *.iml
+.idea/
+.DS_Store
+
+# Secrets / local env — never commit. Use --dart-define-from-file with a local,
+# git-ignored file (see README "Configuration").
+.env
+.env.*
+!.env.example
+*.env.json
+!env/*.example.json
+**/android/key.properties
+**/android/app/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+*.jks
+*.keystore
+env/*.json
+!env/*.example.json
+
+# Local tool downloads (openapi-generator jar)
+.tools/

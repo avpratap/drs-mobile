@@ -1,0 +1,1293 @@
+# DRS core API — mobile subset of the drs-backend contract.
+#
+# Derived by hand from avpratap/drs-backend `app/api/v1/*` + `app/schemas/*`
+# (commit b6fb39c; milestone 2 additions: variants, addresses, payments,
+# create_order, set_override, track_order; milestone 3: delivery_route,
+# deliver_order, fail_delivery_order, upload_pod_asset). Every operationId is copied VERBATIM from the FastAPI route
+# so this file stays a strict subset of the server-generated spec.
+#
+# Replace with the real export as soon as possible:
+#   make api-spec BACKEND_DIR=../drs-backend   # dumps app.openapi() -> openapi/drs-backend.openapi.json
+#   make api-gen                                # regenerates packages/drs_api
+openapi: 3.1.0
+info:
+  title: DRS API (mobile subset)
+  version: 0.1.0
+servers:
+  - url: http://localhost:8000
+    description: Local dev. Real base URL is injected via --dart-define=DRS_API_BASE_URL.
+security:
+  - HTTPBearer: []
+tags:
+  - name: auth
+  - name: products
+  - name: cart
+  - name: subscriptions
+  - name: billing
+  - name: orders
+  - name: account
+  - name: delivery
+  - name: payments
+paths:
+  # ---------------------------------------------------------------- auth
+  /api/v1/auth/otp/request:
+    post:
+      tags: [auth]
+      operationId: request_otp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OTPRequest' }
+      responses:
+        '200':
+          description: OTP sent (dev_otp present only in non-prod when no SMS was sent)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OTPRequestResponse' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/Error' }
+  /api/v1/auth/otp/verify:
+    post:
+      tags: [auth]
+      operationId: verify_otp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OTPVerify' }
+      responses:
+        '200':
+          description: Access + refresh JWT pair
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenPair' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/Error' }
+  /api/v1/auth/refresh:
+    post:
+      tags: [auth]
+      operationId: refresh_token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshRequest' }
+      responses:
+        '200':
+          description: Rotated token pair
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenPair' }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshRequest' }
+      responses:
+        '200':
+          description: Refresh-token family revoked
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DetailOut' }
+  /api/v1/auth/me:
+    get:
+      tags: [auth]
+      operationId: get_me
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserOut' }
+        '401': { $ref: '#/components/responses/Error' }
+
+  # ---------------------------------------------------------------- products
+  /api/v1/products:
+    get:
+      tags: [products]
+      operationId: list_products
+      security: []
+      parameters:
+        - { name: category, in: query, required: false, schema: { type: string } }
+        - { name: q, in: query, required: false, schema: { type: string } }
+        - name: sort
+          in: query
+          required: false
+          description: newest | rating | name (default id asc)
+          schema: { type: string }
+        - { name: perishable, in: query, required: false, schema: { type: boolean } }
+        - { name: in_stock, in: query, required: false, schema: { type: boolean } }
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Offset' }
+      responses:
+        '200':
+          description: Active products
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ProductOut' }
+  /api/v1/products/categories:
+    get:
+      tags: [products]
+      operationId: list_product_categories
+      security: []
+      responses:
+        '200':
+          description: Distinct categories among active products
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string }
+  /api/v1/products/{product_id}:
+    get:
+      tags: [products]
+      operationId: get_product
+      security: []
+      parameters:
+        - { name: product_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Product
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductOut' }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /api/v1/products/{product_id}/full:
+    get:
+      tags: [products]
+      operationId: get_product_full
+      security: []
+      parameters:
+        - { name: product_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Product with its active pack-size variants (storefront-priced)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductFullOut' }
+        '404': { $ref: '#/components/responses/Error' }
+
+  # ---------------------------------------------------------------- cart
+  /api/v1/cart:
+    get:
+      tags: [cart]
+      operationId: get_cart
+      responses:
+        '200':
+          description: Active cart
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartOut' }
+  /api/v1/cart/items:
+    post:
+      tags: [cart]
+      operationId: add_cart_item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CartItemIn' }
+      responses:
+        '200':
+          description: Updated cart
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartOut' }
+  /api/v1/cart/items/{item_id}:
+    patch:
+      tags: [cart]
+      operationId: set_cart_item_qty
+      parameters:
+        - { name: item_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CartItemQtyIn' }
+      responses:
+        '200':
+          description: Updated cart
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartOut' }
+    delete:
+      tags: [cart]
+      operationId: remove_cart_item
+      parameters:
+        - { name: item_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Updated cart
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartOut' }
+  /api/v1/cart/quote:
+    post:
+      tags: [cart]
+      operationId: cart_quote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QuoteIn' }
+      responses:
+        '200':
+          description: Pre-pay quote
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuoteOut' }
+  /api/v1/cart/checkout:
+    post:
+      tags: [cart]
+      operationId: checkout_cart
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CheckoutIn' }
+      responses:
+        '200':
+          description: Created order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderOut' }
+
+  # ---------------------------------------------------------------- subscriptions
+  /api/v1/subscriptions:
+    get:
+      tags: [subscriptions]
+      operationId: list_subscriptions
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Offset' }
+      responses:
+        '200':
+          description: Caller's subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SubscriptionOut' }
+    post:
+      tags: [subscriptions]
+      operationId: create_subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubscriptionCreate' }
+      responses:
+        '200':
+          description: Created subscription
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubscriptionOut' }
+  /api/v1/subscriptions/{sub_id}:
+    get:
+      tags: [subscriptions]
+      operationId: get_subscription
+      parameters:
+        - { $ref: '#/components/parameters/SubId' }
+      responses:
+        '200':
+          description: Subscription with items
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubscriptionDetail' }
+  /api/v1/subscriptions/{sub_id}/items:
+    put:
+      tags: [subscriptions]
+      operationId: set_subscription_items
+      parameters:
+        - { $ref: '#/components/parameters/SubId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: '#/components/schemas/SubscriptionItemIn' }
+      responses:
+        '200':
+          description: Subscription with items
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubscriptionDetail' }
+  /api/v1/subscriptions/{sub_id}/overrides:
+    post:
+      tags: [subscriptions]
+      operationId: set_override
+      parameters:
+        - { $ref: '#/components/parameters/SubId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OverrideIn' }
+      responses:
+        '200':
+          description: Override saved (override_qty 0 = skip that day)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OverrideSavedOut' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /api/v1/subscriptions/{sub_id}/pause:
+    post:
+      tags: [subscriptions]
+      operationId: pause_subscription
+      parameters:
+        - { $ref: '#/components/parameters/SubId' }
+      responses:
+        '200':
+          description: Paused
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubscriptionOut' }
+  /api/v1/subscriptions/{sub_id}/resume:
+    post:
+      tags: [subscriptions]
+      operationId: resume_subscription
+      parameters:
+        - { $ref: '#/components/parameters/SubId' }
+      responses:
+        '200':
+          description: Resumed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubscriptionOut' }
+  /api/v1/subscriptions/{sub_id}/cancel:
+    post:
+      tags: [subscriptions]
+      operationId: cancel_subscription
+      parameters:
+        - { $ref: '#/components/parameters/SubId' }
+      responses:
+        '200':
+          description: Cancelled (terminal)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubscriptionOut' }
+  /api/v1/subscriptions/{sub_id}/plan:
+    get:
+      tags: [subscriptions]
+      operationId: get_subscription_plan
+      parameters:
+        - { $ref: '#/components/parameters/SubId' }
+        - { name: date, in: query, required: false, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Effective quantities for a date (default tomorrow, IST)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlanOut' }
+
+  # ---------------------------------------------------------------- billing / wallet
+  /api/v1/billing/me:
+    get:
+      tags: [billing]
+      operationId: my_billing
+      responses:
+        '200':
+          description: Wallet + credit summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BillingSummary' }
+  /api/v1/billing/transactions:
+    get:
+      tags: [billing]
+      operationId: my_wallet_transactions
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Offset' }
+      responses:
+        '200':
+          description: Wallet ledger, newest first (total in X-Total-Count)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/WalletTxnLineOut' }
+
+  # ---------------------------------------------------------------- orders
+  /api/v1/orders:
+    post:
+      tags: [orders]
+      operationId: create_order
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderCreate' }
+      responses:
+        '200':
+          description: Created order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderOut' }
+    get:
+      tags: [orders]
+      operationId: list_orders
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Offset' }
+      responses:
+        '200':
+          description: Caller's orders, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/OrderOut' }
+  /api/v1/orders/{order_id}:
+    get:
+      tags: [orders]
+      operationId: get_order
+      parameters:
+        - { $ref: '#/components/parameters/OrderId' }
+      responses:
+        '200':
+          description: Order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderOut' }
+  /api/v1/orders/{order_id}/cancel:
+    post:
+      tags: [orders]
+      operationId: cancel_order
+      parameters:
+        - { $ref: '#/components/parameters/OrderId' }
+      responses:
+        '200':
+          description: Cancelled order
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderOut' }
+
+  /api/v1/orders/{order_id}/tracking:
+    get:
+      tags: [orders]
+      operationId: track_order
+      parameters:
+        - { $ref: '#/components/parameters/OrderId' }
+      responses:
+        '200':
+          description: Order + payment state and courier shipments with events (newest first)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderTrackingOut' }
+
+  # ---------------------------------------------------------------- payments
+  /api/v1/payments/create:
+    post:
+      tags: [payments]
+      operationId: create_payment
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentCreate' }
+      responses:
+        '200':
+          description: Gateway order to open in Razorpay checkout (key_id "" = dev stub)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentCreateOut' }
+        '409': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
+  /api/v1/payments/verify:
+    post:
+      tags: [payments]
+      operationId: verify_payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentVerify' }
+      responses:
+        '200':
+          description: Payment finalized (idempotent)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentVerifyOut' }
+        '400': { $ref: '#/components/responses/Error' }
+
+  # ---------------------------------------------------------------- account
+  /api/v1/profile:
+    get:
+      tags: [account]
+      operationId: get_profile
+      responses:
+        '200':
+          description: Caller's profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProfileOut' }
+
+  /api/v1/addresses:
+    get:
+      tags: [account]
+      operationId: list_addresses
+      responses:
+        '200':
+          description: Caller's saved delivery addresses
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AddressOut' }
+    post:
+      tags: [account]
+      operationId: create_address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddressIn' }
+      responses:
+        '201':
+          description: Created address
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AddressOut' }
+  /api/v1/addresses/{address_id}/default:
+    post:
+      tags: [account]
+      operationId: set_default_address
+      parameters:
+        - { name: address_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Address now default
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AddressOut' }
+
+  # ---------------------------------------------------------------- delivery (staff)
+  /api/v1/delivery/orders:
+    get:
+      tags: [delivery]
+      operationId: list_delivery_orders
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: Delivery date (default tomorrow, IST)
+          schema: { type: string, format: date }
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Offset' }
+      responses:
+        '200':
+          description: Delivery orders for the date, scoped to the caller
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DeliveryOrderOut' }
+  /api/v1/delivery/orders/route:
+    get:
+      tags: [delivery]
+      operationId: delivery_route
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: Delivery date (default tomorrow, IST)
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: The caller's assigned stops as an ordered route
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RouteStopOut' }
+  /api/v1/delivery/orders/{order_id}/deliver:
+    post:
+      tags: [delivery]
+      operationId: deliver_order
+      parameters:
+        - { $ref: '#/components/parameters/OrderId' }
+        - { $ref: '#/components/parameters/OptionalIdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeliverRequest' }
+      responses:
+        '200':
+          description: Stop marked delivered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeliveryOrderOut' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+  /api/v1/delivery/orders/{order_id}/fail:
+    post:
+      tags: [delivery]
+      operationId: fail_delivery_order
+      parameters:
+        - { $ref: '#/components/parameters/OrderId' }
+        - { $ref: '#/components/parameters/OptionalIdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FailIn' }
+      responses:
+        '200':
+          description: Stop marked failed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeliveryOrderOut' }
+        '409': { $ref: '#/components/responses/Error' }
+  /api/v1/delivery/uploads:
+    post:
+      tags: [delivery]
+      operationId: upload_pod_asset
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200':
+          description: Stored privately (EXIF stripped); pass `url` as pod.photo_url
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UploadOut' }
+        '413': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /api/v1/delivery/summary:
+    get:
+      tags: [delivery]
+      operationId: delivery_summary
+      parameters:
+        - { name: date, in: query, required: false, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Day summary for the driver
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeliverySummaryOut' }
+
+components:
+  securitySchemes:
+    HTTPBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Limit:
+      { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+    Offset:
+      { name: offset, in: query, required: false, schema: { type: integer, minimum: 0, default: 0 } }
+    SubId:
+      { name: sub_id, in: path, required: true, schema: { type: integer } }
+    OrderId:
+      { name: order_id, in: path, required: true, schema: { type: integer } }
+    OptionalIdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Opt-in at-most-once execution (the backend middleware replays a stored 2xx).
+      schema: { type: string, maxLength: 100 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Client-generated UUID; a retried request replays instead of re-applying.
+      schema: { type: string }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DetailOut' }
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/HTTPValidationError' }
+  schemas:
+    DetailOut:
+      type: object
+      required: [detail]
+      properties:
+        detail: { type: string }
+    ValidationErrorItem:
+      type: object
+      required: [loc, msg, type]
+      properties:
+        loc:
+          type: array
+          items: { type: string }
+        msg: { type: string }
+        type: { type: string }
+    HTTPValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items: { $ref: '#/components/schemas/ValidationErrorItem' }
+    # auth
+    OTPRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone: { type: string, pattern: '^\+?\d{10,15}$' }
+    OTPRequestResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail: { type: string }
+        dev_otp: { type: string, nullable: true }
+    OTPVerify:
+      type: object
+      required: [phone, otp]
+      properties:
+        phone: { type: string }
+        otp: { type: string }
+    TokenPair:
+      type: object
+      required: [access_token, refresh_token]
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string, default: bearer }
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+    UserOut:
+      type: object
+      required: [id, phone, role, status]
+      properties:
+        id: { type: integer }
+        phone: { type: string }
+        role: { type: string }
+        full_name: { type: string, nullable: true }
+        status: { type: string }
+    # products
+    ProductOut:
+      type: object
+      required: [id, sku, name, status]
+      properties:
+        id: { type: integer }
+        sku: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        uom: { type: string, default: piece }
+        pack_size: { type: number, default: 1 }
+        is_subscribable: { type: boolean, default: true }
+        perishable: { type: boolean, default: true }
+        hsn_code: { type: string, nullable: true }
+        gst_rate: { type: number, default: 0 }
+        category: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        status: { type: string }
+        from_price: { type: number, nullable: true, description: 'Lowest GST-inclusive retail price (INR)' }
+        avg_rating: { type: number, default: 0 }
+        rating_count: { type: integer, default: 0 }
+        weight_kg: { type: number, nullable: true }
+        length_cm: { type: number, nullable: true }
+        width_cm: { type: number, nullable: true }
+        height_cm: { type: number, nullable: true }
+    # cart
+    CartItemIn:
+      type: object
+      required: [product_id, qty]
+      properties:
+        product_id: { type: integer }
+        qty: { type: number, exclusiveMinimum: 0, maximum: 100000 }
+    CartItemQtyIn:
+      type: object
+      required: [qty]
+      properties:
+        qty: { type: number, exclusiveMinimum: 0, maximum: 100000 }
+    CartLineOut:
+      type: object
+      required: [id, product_id, qty, unit_price, line_total]
+      properties:
+        id: { type: integer }
+        product_id: { type: integer }
+        qty: { type: number }
+        unit_price: { type: number }
+        line_total: { type: number }
+    CartOut:
+      type: object
+      required: [id, status, subtotal]
+      properties:
+        id: { type: integer }
+        status: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CartLineOut' }
+        subtotal: { type: number }
+    QuoteIn:
+      type: object
+      properties:
+        coupon_code: { type: string, nullable: true, maxLength: 32 }
+        pincode: { type: string, nullable: true, maxLength: 10 }
+        weight_kg: { type: number, default: 0.5 }
+        cod: { type: boolean, default: false }
+    QuoteLineOut:
+      type: object
+      required: [product_id, qty, unit_price, line_total, gst_rate, gst_amount]
+      properties:
+        product_id: { type: integer }
+        qty: { type: number }
+        unit_price: { type: number }
+        line_total: { type: number }
+        gst_rate: { type: number }
+        gst_amount: { type: number }
+    QuoteOut:
+      type: object
+      required: [subtotal, discount, tax_total, total, total_incl_tax]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/QuoteLineOut' }
+        subtotal: { type: number }
+        discount: { type: number }
+        tax_total: { type: number }
+        total: { type: number }
+        total_incl_tax: { type: number }
+        serviceable: { type: boolean, nullable: true }
+        etd_days: { type: integer, nullable: true }
+        shipping_rate: { type: number, nullable: true }
+    CheckoutIn:
+      type: object
+      properties:
+        address: { type: string, nullable: true, maxLength: 1024 }
+        state: { type: string, nullable: true, maxLength: 120 }
+        pincode: { type: string, nullable: true }
+        coupon_code: { type: string, nullable: true, maxLength: 32 }
+    # orders
+    OrderItemOut:
+      type: object
+      required: [product_id, qty, unit_price, line_total]
+      properties:
+        product_id: { type: integer }
+        qty: { type: number }
+        unit_price: { type: number }
+        line_total: { type: number }
+        gst_rate: { type: number, default: 0 }
+        gst_amount: { type: number, default: 0 }
+        price_incl_tax: { type: number, default: 0 }
+    OrderOut:
+      type: object
+      required: [id, order_no, shop_id, order_type, status, subtotal, total, payment_status]
+      properties:
+        id: { type: integer }
+        order_no: { type: string }
+        shop_id: { type: integer }
+        order_type: { type: string }
+        status: { type: string }
+        subtotal: { type: number }
+        discount: { type: number, default: 0 }
+        coupon_code: { type: string, nullable: true }
+        total: { type: number }
+        payment_status: { type: string }
+        tax_total: { type: number, default: 0 }
+        total_incl_tax: { type: number, default: 0 }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OrderItemOut' }
+    # subscriptions
+    SubscriptionCreate:
+      type: object
+      properties:
+        shop_id: { type: integer, nullable: true }
+        home_name: { type: string, nullable: true, maxLength: 255 }
+        home_address: { type: string, nullable: true, maxLength: 1024 }
+        home_state: { type: string, nullable: true, maxLength: 120 }
+        home_pincode: { type: string, nullable: true, maxLength: 10 }
+    SubscriptionItemIn:
+      type: object
+      required: [product_id, default_qty]
+      properties:
+        product_id: { type: integer }
+        default_qty: { type: number, minimum: 0, maximum: 100000 }
+        frequency: { type: string, default: daily, description: 'daily | alternate | weekly' }
+        interval_days: { type: integer, nullable: true, minimum: 1, maximum: 365 }
+        days_of_week: { type: string, nullable: true, description: 'CSV of ISO weekdays, e.g. "1,3,5"' }
+    SubscriptionItemOut:
+      type: object
+      required: [id, product_id, default_qty, active]
+      properties:
+        id: { type: integer }
+        product_id: { type: integer }
+        default_qty: { type: number }
+        frequency: { type: string, default: daily }
+        interval_days: { type: integer, nullable: true }
+        days_of_week: { type: string, nullable: true }
+        active: { type: boolean }
+    SubscriptionOut:
+      type: object
+      required: [id, shop_id, account_id, status, start_date]
+      properties:
+        id: { type: integer }
+        shop_id: { type: integer }
+        account_id: { type: integer }
+        status: { type: string }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date, nullable: true }
+    SubscriptionDetail:
+      type: object
+      required: [id, shop_id, account_id, status, start_date]
+      properties:
+        id: { type: integer }
+        shop_id: { type: integer }
+        account_id: { type: integer }
+        status: { type: string }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date, nullable: true }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SubscriptionItemOut' }
+    PlanLine:
+      type: object
+      required: [product_id, qty]
+      properties:
+        product_id: { type: integer }
+        qty: { type: number }
+    PlanOut:
+      type: object
+      required: [for_date, lines]
+      properties:
+        for_date: { type: string, format: date }
+        lines:
+          type: array
+          items: { $ref: '#/components/schemas/PlanLine' }
+    # billing
+    WalletTxnOut:
+      type: object
+      required: [txn_type, amount, balance_after]
+      properties:
+        txn_type: { type: string }
+        amount: { type: number }
+        balance_after: { type: number }
+    WalletTxnLineOut:
+      type: object
+      required: [id, txn_type, amount, balance_after, created_at]
+      properties:
+        id: { type: integer }
+        txn_type: { type: string }
+        amount: { type: number, description: 'Signed: + credit, - debit' }
+        balance_after: { type: number }
+        ref_type: { type: string, nullable: true }
+        ref_id: { type: integer, nullable: true }
+        created_at: { type: string, format: date-time }
+    BillingSummary:
+      type: object
+      required: [account_id, billing_mode, wallet_balance, credit_outstanding]
+      properties:
+        account_id: { type: integer }
+        billing_mode: { type: string }
+        wallet_balance: { type: number }
+        credit_outstanding: { type: number }
+        recent_wallet_txns:
+          type: array
+          items: { $ref: '#/components/schemas/WalletTxnOut' }
+    # account
+    ProfileOut:
+      type: object
+      required: [user_id, phone]
+      properties:
+        user_id: { type: integer }
+        phone: { type: string }
+        email: { type: string, nullable: true }
+        email_verified: { type: boolean, default: false }
+        full_name: { type: string, nullable: true }
+        display_name: { type: string, nullable: true }
+        avatar_url: { type: string, nullable: true }
+        locale: { type: string, default: en-IN }
+        notify_whatsapp: { type: boolean, default: false }
+        notify_sms: { type: boolean, default: true }
+        notify_push: { type: boolean, default: true }
+        notify_email: { type: boolean, default: false }
+        marketing_opt_in: { type: boolean, default: false }
+    # delivery
+    DeliveryOrderItemOut:
+      type: object
+      required: [product_id, qty_planned, qty_delivered, unit_price, line_total, status]
+      properties:
+        product_id: { type: integer }
+        qty_planned: { type: number }
+        qty_delivered: { type: number }
+        unit_price: { type: number }
+        line_total: { type: number }
+        status: { type: string }
+    DeliveryOrderOut:
+      type: object
+      required: [id, delivery_date, shop_id, origin, status, subtotal, total, amount_due]
+      properties:
+        id: { type: integer }
+        delivery_date: { type: string, format: date }
+        shop_id: { type: integer }
+        origin: { type: string }
+        status: { type: string }
+        failure_reason: { type: string, nullable: true }
+        subtotal: { type: number }
+        total: { type: number }
+        amount_due: { type: number }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/DeliveryOrderItemOut' }
+        shop_name: { type: string, nullable: true }
+        address: { type: string, nullable: true }
+        pincode: { type: string, nullable: true }
+        lat: { type: number, nullable: true }
+        lng: { type: number, nullable: true }
+        contact_name: { type: string, nullable: true }
+        contact_phone: { type: string, nullable: true }
+    DeliverySummaryOut:
+      type: object
+      required: [date, delivered, failed, pending, cash_collected]
+      properties:
+        date: { type: string, format: date }
+        delivered: { type: integer }
+        failed: { type: integer }
+        pending: { type: integer }
+        cash_collected: { type: number }
+    # milestone 2
+    VariantOut:
+      type: object
+      required: [id, product_id, sku, label, pack_size, price, status, sort_order]
+      properties:
+        id: { type: integer }
+        product_id: { type: integer }
+        sku: { type: string }
+        label: { type: string }
+        pack_size: { type: number, description: 'Cart qty for one pack, in the product uom' }
+        price: { type: number, description: 'Legacy catalogue field — do NOT display; use selling_price' }
+        mrp: { type: number, nullable: true }
+        image_url: { type: string, nullable: true }
+        status: { type: string }
+        sort_order: { type: integer }
+        selling_price: { type: number, nullable: true, description: 'GST-inclusive storefront price of this pack' }
+        price_available: { type: boolean, nullable: true }
+        show_mrp_strike: { type: boolean, default: false }
+    ProductFullOut:
+      type: object
+      required: [id, sku, name, status]
+      properties:
+        id: { type: integer }
+        sku: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        uom: { type: string, default: piece }
+        pack_size: { type: number, default: 1 }
+        is_subscribable: { type: boolean, default: true }
+        perishable: { type: boolean, default: true }
+        gst_rate: { type: number, default: 0 }
+        category: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        status: { type: string }
+        from_price: { type: number, nullable: true }
+        avg_rating: { type: number, default: 0 }
+        rating_count: { type: integer, default: 0 }
+        variants:
+          type: array
+          items: { $ref: '#/components/schemas/VariantOut' }
+    OrderItemIn:
+      type: object
+      required: [product_id, qty]
+      properties:
+        product_id: { type: integer }
+        qty: { type: number, exclusiveMinimum: 0, maximum: 100000 }
+    OrderCreate:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/OrderItemIn' }
+        address: { type: string, nullable: true, maxLength: 1024 }
+        state: { type: string, nullable: true, maxLength: 120 }
+        pincode: { type: string, nullable: true }
+        coupon_code: { type: string, nullable: true, maxLength: 32 }
+    TrackingEventOut:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string }
+        location: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+        event_time: { type: string, format: date-time, nullable: true }
+    ShipmentTrackOut:
+      type: object
+      required: [id, shipment_no, status]
+      properties:
+        id: { type: integer }
+        shipment_no: { type: string }
+        status: { type: string }
+        courier: { type: string, nullable: true }
+        awb: { type: string, nullable: true }
+        tracking_url: { type: string, nullable: true }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/TrackingEventOut' }
+    OrderTrackingOut:
+      type: object
+      required: [order_id, order_no, status, payment_status]
+      properties:
+        order_id: { type: integer }
+        order_no: { type: string }
+        status: { type: string }
+        payment_status: { type: string }
+        shipments:
+          type: array
+          items: { $ref: '#/components/schemas/ShipmentTrackOut' }
+    PaymentCreate:
+      type: object
+      required: [purpose]
+      properties:
+        amount: { type: number, nullable: true, description: 'Required for wallet_topup; ignored for order_payment' }
+        purpose: { type: string, description: 'wallet_topup | order_payment' }
+        order_id: { type: integer, nullable: true }
+    PaymentCreateOut:
+      type: object
+      required: [payment_id, gateway_order_id, amount, key_id]
+      properties:
+        payment_id: { type: integer }
+        gateway_order_id: { type: string }
+        amount: { type: number }
+        key_id: { type: string, description: 'Razorpay publishable key id ("" in dev stub)' }
+    PaymentVerify:
+      type: object
+      required: [gateway_order_id, gateway_payment_id, signature]
+      properties:
+        gateway_order_id: { type: string }
+        gateway_payment_id: { type: string }
+        signature: { type: string, description: 'Razorpay signature; "dev" in non-prod stub mode' }
+    PaymentVerifyOut:
+      type: object
+      required: [detail, payment_id, status]
+      properties:
+        detail: { type: string }
+        payment_id: { type: integer }
+        status: { type: string }
+    AddressIn:
+      type: object
+      required: [line1, city, state, pincode]
+      properties:
+        label: { type: string, nullable: true, maxLength: 40 }
+        contact_name: { type: string, nullable: true, maxLength: 120 }
+        contact_phone: { type: string, nullable: true, pattern: '^\+?[0-9]{10,15}$' }
+        line1: { type: string, minLength: 1, maxLength: 255 }
+        line2: { type: string, nullable: true, maxLength: 255 }
+        landmark: { type: string, nullable: true, maxLength: 255 }
+        city: { type: string, minLength: 1, maxLength: 120 }
+        state: { type: string, minLength: 1, maxLength: 120 }
+        pincode: { type: string, pattern: '^[1-9][0-9]{5}$' }
+        country: { type: string, default: IN }
+        is_default: { type: boolean, default: false }
+    AddressOut:
+      type: object
+      required: [id, account_id, line1, city, state, pincode, country, is_default, status]
+      properties:
+        id: { type: integer }
+        account_id: { type: integer }
+        label: { type: string, nullable: true }
+        contact_name: { type: string, nullable: true }
+        contact_phone: { type: string, nullable: true }
+        line1: { type: string }
+        line2: { type: string, nullable: true }
+        landmark: { type: string, nullable: true }
+        city: { type: string }
+        state: { type: string }
+        pincode: { type: string }
+        country: { type: string }
+        is_default: { type: boolean }
+        status: { type: string }
+    OverrideIn:
+      type: object
+      required: [product_id, for_date, override_qty]
+      properties:
+        product_id: { type: integer }
+        for_date: { type: string, format: date }
+        override_qty: { type: number, minimum: 0, maximum: 100000, description: '0 = skip that day' }
+        note: { type: string, nullable: true, maxLength: 255 }
+    OverrideSavedOut:
+      type: object
+      required: [detail, product_id, for_date, qty]
+      properties:
+        detail: { type: string }
+        product_id: { type: integer }
+        for_date: { type: string }
+        qty: { type: number }
+    # milestone 3
+    RouteStopOut:
+      type: object
+      required: [sequence, order]
+      properties:
+        sequence: { type: integer }
+        order: { $ref: '#/components/schemas/DeliveryOrderOut' }
+    DeliverItem:
+      type: object
+      required: [product_id, qty_delivered]
+      properties:
+        product_id: { type: integer }
+        qty_delivered: { type: number, minimum: 0, maximum: 100000 }
+    PODIn:
+      type: object
+      properties:
+        recipient_name: { type: string, nullable: true, maxLength: 255 }
+        photo_url: { type: string, nullable: true, maxLength: 512, description: 'media:… ref from upload_pod_asset, or https URL' }
+        signature_url: { type: string, nullable: true, maxLength: 512 }
+        lat: { type: number, nullable: true }
+        lng: { type: number, nullable: true }
+        note: { type: string, nullable: true, maxLength: 255 }
+    DeliverRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items: { $ref: '#/components/schemas/DeliverItem' }
+        pod: { $ref: '#/components/schemas/PODIn' }
+        cash_collected: { type: number, nullable: true, minimum: 0 }
+        cash_method: { type: string, nullable: true, description: 'cash | upi | cheque' }
+    FailIn:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, description: 'customer_unavailable | address_wrong | refused | other' }
+    UploadOut:
+      type: object
+      required: [url, preview_url]
+      properties:
+        url: { type: string, description: 'media:<key> reference' }
+        preview_url: { type: string }
