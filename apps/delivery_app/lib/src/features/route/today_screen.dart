@@ -115,10 +115,28 @@ class TodayScreen extends ConsumerWidget {
               ),
             ),
           ),
-          IconButton(
-            tooltip: 'Log out',
-            icon: const Icon(Icons.logout),
-            onPressed: () => _logout(context, ref),
+          PopupMenuButton<String>(
+            tooltip: 'More',
+            onSelected: (v) => switch (v) {
+              'about' => context.push(Routes.about),
+              _ => _logout(context, ref),
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'about',
+                child: ListTile(
+                  leading: Icon(Icons.info_outline),
+                  title: Text('About & privacy'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'logout',
+                child: ListTile(
+                  leading: Icon(Icons.logout),
+                  title: Text('Log out'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

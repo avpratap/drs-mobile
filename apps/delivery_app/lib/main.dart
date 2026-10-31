@@ -1,3 +1,4 @@
+import 'package:drs_ui/drs_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -6,6 +7,7 @@ import 'src/core/push.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  registerDrsLicenses();
   runApp(
     ProviderScope(
       retry: (_, _) => null,

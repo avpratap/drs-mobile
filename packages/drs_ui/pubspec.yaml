@@ -16,7 +16,9 @@ dependencies:
     sdk: flutter
   flutter_local_notifications: ^22.3.3
   flutter_secure_storage: ^11.2.0
+  package_info_plus: ^10.2.2
   riverpod: ^3.4.3
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_lints: ^6.0.0
@@ -26,6 +28,10 @@ dev_dependencies:
 flutter:
   # Widgets here use Material icons (also bundles the icon font for goldens).
   uses-material-design: true
+  # Font licences, shown on the open-source licences page.
+  assets:
+    - assets/fonts/OFL-Poppins.txt
+    - assets/fonts/OFL-Montserrat.txt
   # Bundled (OFL-licensed, see assets/fonts/OFL-*.txt) so the UI never fetches
   # fonts at runtime — works offline and makes no third-party requests.
   fonts:

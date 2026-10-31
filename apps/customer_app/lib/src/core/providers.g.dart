@@ -51,7 +51,7 @@ final class EnvProvider extends $FunctionalProvider<DrsEnv, DrsEnv, DrsEnv>
   }
 }
 
-String _$envHash() => r'bba14f67b9e043cc3fedea10c254c92cf292f931';
+String _$envHash() => r'733f043f471f513e17dd5a47729bb5a68e8c72c9';
 
 @ProviderFor(tokenStore)
 final tokenStoreProvider = TokenStoreProvider._();
