@@ -23,12 +23,26 @@ val dartDefines: Map<String, String> =
         ?.toMap()
         ?: emptyMap()
 
-// Release signing comes from android/key.properties (git-ignored; CI writes it from secrets).
-// Without it, release builds fall back to the debug key so `flutter run --release` works locally.
+// Release signing (see docs/RELEASE.md). Never committed. Sources, first wins:
+//   1. Environment: DRS_ANDROID_KEYSTORE_PATH, DRS_ANDROID_KEYSTORE_PASSWORD,
+//      DRS_ANDROID_KEY_ALIAS, DRS_ANDROID_KEY_PASSWORD (CI secrets).
+//   2. android/key.properties: storeFile, storePassword, keyAlias, keyPassword
+//      (git-ignored; for a local release machine).
+// Deliberately NOT --dart-define: defines are compiled into the app binary.
+// Without a keystore, release builds use the debug key so `flutter run
+// --release` works locally; set DRS_REQUIRE_RELEASE_SIGNING=true (store
+// builds) to fail instead.
 val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
+
+fun signingValue(env: String, prop: String): String? =
+    System.getenv(env)?.takeIf { it.isNotBlank() }
+        ?: keystoreProperties.getProperty(prop)?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile: String? = signingValue("DRS_ANDROID_KEYSTORE_PATH", "storeFile")
+val requireReleaseSigning = System.getenv("DRS_REQUIRE_RELEASE_SIGNING") == "true"
 
 android {
     namespace = "in.drsdairy.delivery"
@@ -61,20 +75,50 @@ android {
                 ?: ""
     }
 
+    // Build flavors (flutter run/build --flavor dev|prod). `dev` installs
+    // side by side with `prod` (".dev" id suffix) and talks to a local
+    // backend by default; `prod` defaults to the live backend. The Dart side
+    // reads the flavor via `appFlavor` (see DrsEnv).
+    buildFeatures {
+        // AGP 9 turns resValue() off by default; the flavors use it for the
+        // launcher label.
+        resValues = true
+    }
+
+    flavorDimensions += "env"
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "Delivery Dev")
+        }
+        create("prod") {
+            dimension = "env"
+            resValue("string", "app_name", "DRS Delivery")
+        }
+    }
+
     signingConfigs {
-        if (keystoreProperties.getProperty("storeFile") != null) {
+        if (releaseStoreFile != null) {
             create("release") {
-                storeFile = file(keystoreProperties.getProperty("storeFile"))
-                storePassword = keystoreProperties.getProperty("storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(releaseStoreFile)
+                storePassword = signingValue("DRS_ANDROID_KEYSTORE_PASSWORD", "storePassword")
+                keyAlias = signingValue("DRS_ANDROID_KEY_ALIAS", "keyAlias")
+                keyPassword = signingValue("DRS_ANDROID_KEY_PASSWORD", "keyPassword")
             }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            val release = signingConfigs.findByName("release")
+            if (release == null && requireReleaseSigning) {
+                throw GradleException(
+                    "Release signing required but no keystore configured (docs/RELEASE.md)",
+                )
+            }
+            signingConfig = release ?: signingConfigs.getByName("debug")
         }
     }
 }

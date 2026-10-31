@@ -1,0 +1,12 @@
+# Native splash (all flavors): deep green with the gold mark.
+flutter_native_splash:
+  color: "#0D4C3C"
+  image: "branding/delivery/splash.png"
+  android_12:
+    color: "#0D4C3C"
+    image: "branding/delivery/splash_android12.png"
+    icon_background_color: "#0D4C3C"
+  android: true
+  ios: true
+  web: false
+  fullscreen: false
