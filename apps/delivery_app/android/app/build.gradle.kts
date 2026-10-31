@@ -1,3 +1,4 @@
+import java.util.Base64
 import java.util.Properties
 
 plugins {
@@ -6,21 +7,24 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Release signing comes from android/key.properties (git-ignored; CI writes it from secrets).
-// Without it, release builds fall back to the debug key so `flutter run --release` works locally.
 // `flutter build/run --dart-define=K=V` reaches Gradle as the base64,
 // comma-separated `dart-defines` property. Reading the Maps key from it keeps
 // ONE source of truth for Dart and the Android manifest.
 val dartDefines: Map<String, String> =
     (project.findProperty("dart-defines") as String?)
         ?.split(",")
-        ?.mapNotNull { encoded ->
-            runCatching { String(java.util.Base64.getDecoder().decode(encoded)) }.getOrNull()
+        ?.mapNotNull { encoded: String ->
+            runCatching { String(Base64.getDecoder().decode(encoded)) }.getOrNull()
         }
-        ?.mapNotNull { pair -> pair.split("=", limit = 2).takeIf { it.size == 2 }?.let { it[0] to it[1] } }
+        ?.mapNotNull { pair: String ->
+            val parts = pair.split("=", limit = 2)
+            if (parts.size == 2) parts[0] to parts[1] else null
+        }
         ?.toMap()
         ?: emptyMap()
 
+// Release signing comes from android/key.properties (git-ignored; CI writes it from secrets).
+// Without it, release builds fall back to the debug key so `flutter run --release` works locally.
 val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
