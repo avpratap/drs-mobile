@@ -4,7 +4,10 @@
 # (commit b6fb39c; milestone 2 additions: variants, addresses, payments,
 # create_order, set_override, track_order; milestone 3: delivery_route,
 # deliver_order, fail_delivery_order, upload_pod_asset; milestone 4:
-# register_device_token, unregister_device_token_body). Every operationId is copied VERBATIM from the FastAPI route
+# register_device_token, unregister_device_token_body; milestone 5:
+# update_profile, update_address, delete_address, get_consents,
+# record_consent, list_product_ratings, rate_product, delete_my_rating,
+# toggle_review_helpful). Every operationId is copied VERBATIM from the FastAPI route
 # so this file stays a strict subset of the server-generated spec.
 #
 # Replace with the real export as soon as possible:
@@ -30,6 +33,7 @@ tags:
   - name: delivery
   - name: payments
   - name: devices
+  - name: reviews
 paths:
   # ---------------------------------------------------------------- auth
   /api/v1/auth/otp/request:
@@ -183,6 +187,66 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ProductFullOut' }
         '404': { $ref: '#/components/responses/Error' }
+
+  /api/v1/products/{product_id}/ratings:
+    get:
+      tags: [reviews]
+      operationId: list_product_ratings
+      security: []
+      parameters:
+        - { name: product_id, in: path, required: true, schema: { type: integer } }
+        - name: sort
+          in: query
+          required: false
+          description: recent (default) | helpful
+          schema: { type: string }
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Offset' }
+      responses:
+        '200':
+          description: Approved reviews (plus the caller's own, any status) with the distribution
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductRatingsOut' }
+    post:
+      tags: [reviews]
+      operationId: rate_product
+      parameters:
+        - { name: product_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RatingIn' }
+      responses:
+        '200':
+          description: Created or updated (one per user per product); non-buyers are held for moderation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RatingOut' }
+    delete:
+      tags: [reviews]
+      operationId: delete_my_rating
+      parameters:
+        - { name: product_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204':
+          description: Deleted
+        '404': { $ref: '#/components/responses/Error' }
+  /api/v1/products/{product_id}/ratings/{rating_id}/helpful:
+    post:
+      tags: [reviews]
+      operationId: toggle_review_helpful
+      parameters:
+        - { name: product_id, in: path, required: true, schema: { type: integer } }
+        - { name: rating_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: Vote toggled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HelpfulOut' }
+        '409': { $ref: '#/components/responses/Error' }
 
   # ---------------------------------------------------------------- cart
   /api/v1/cart:
@@ -546,6 +610,48 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ProfileOut' }
+    patch:
+      tags: [account]
+      operationId: update_profile
+      description: Partial update (only sent fields change). Changing email resets verification.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProfileUpdate' }
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProfileOut' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/v1/consents:
+    get:
+      tags: [account]
+      operationId: get_consents
+      responses:
+        '200':
+          description: Current consent per purpose (granted | withdrawn)
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: string }
+    post:
+      tags: [account]
+      operationId: record_consent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConsentIn' }
+      responses:
+        '200':
+          description: Recorded in the consent ledger
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConsentOut' }
 
   /api/v1/addresses:
     get:
@@ -573,6 +679,31 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AddressOut' }
+  /api/v1/addresses/{address_id}:
+    patch:
+      tags: [account]
+      operationId: update_address
+      parameters:
+        - { name: address_id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddressUpdate' }
+      responses:
+        '200':
+          description: Updated address
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AddressOut' }
+    delete:
+      tags: [account]
+      operationId: delete_address
+      parameters:
+        - { name: address_id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204':
+          description: Deleted
   /api/v1/addresses/{address_id}/default:
     post:
       tags: [account]
@@ -1342,3 +1473,84 @@ components:
       required: [token]
       properties:
         token: { type: string, minLength: 1, maxLength: 512 }
+    # milestone 5
+    ProfileUpdate:
+      type: object
+      properties:
+        full_name: { type: string, maxLength: 255 }
+        display_name: { type: string, maxLength: 120 }
+        email: { type: string, maxLength: 255 }
+        alternate_phone: { type: string }
+        notify_whatsapp: { type: boolean }
+        notify_sms: { type: boolean }
+        notify_push: { type: boolean }
+        notify_email: { type: boolean }
+    ConsentIn:
+      type: object
+      required: [purpose, action]
+      properties:
+        purpose: { type: string, description: 'whatsapp_optin | marketing_sms | marketing_email | marketing_push | marketing_whatsapp | data_processing' }
+        action: { type: string, description: 'granted | withdrawn' }
+    ConsentOut:
+      type: object
+      required: [id, purpose, action, source, created_at]
+      properties:
+        id: { type: integer }
+        purpose: { type: string }
+        action: { type: string }
+        source: { type: string }
+        created_at: { type: string, format: date-time }
+    AddressUpdate:
+      type: object
+      properties:
+        label: { type: string, maxLength: 40 }
+        contact_name: { type: string, maxLength: 120 }
+        contact_phone: { type: string }
+        line1: { type: string, minLength: 1, maxLength: 255 }
+        line2: { type: string, maxLength: 255 }
+        landmark: { type: string, maxLength: 255 }
+        city: { type: string, minLength: 1, maxLength: 120 }
+        state: { type: string, minLength: 1, maxLength: 120 }
+        pincode: { type: string, pattern: '^[1-9][0-9]{5}$' }
+        is_default: { type: boolean }
+    RatingIn:
+      type: object
+      required: [stars]
+      properties:
+        stars: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string, nullable: true, maxLength: 1000 }
+    RatingOut:
+      type: object
+      required: [id, product_id, stars, status, verified_purchase, helpful_count]
+      properties:
+        id: { type: integer }
+        user_id: { type: integer, nullable: true, description: 'Only for the author (PII)' }
+        mine: { type: boolean, default: false }
+        product_id: { type: integer }
+        stars: { type: integer }
+        comment: { type: string, nullable: true }
+        status: { type: string, description: 'approved | pending | rejected' }
+        verified_purchase: { type: boolean }
+        helpful_count: { type: integer }
+        admin_reply: { type: string, nullable: true }
+    ProductRatingsOut:
+      type: object
+      required: [product_id, count, average, distribution, ratings]
+      properties:
+        product_id: { type: integer }
+        count: { type: integer }
+        average: { type: number }
+        distribution:
+          type: object
+          description: 'stars ("1".."5") -> count of approved reviews'
+          additionalProperties: { type: integer }
+        ratings:
+          type: array
+          items: { $ref: '#/components/schemas/RatingOut' }
+    HelpfulOut:
+      type: object
+      required: [rating_id, helpful_count, voted]
+      properties:
+        rating_id: { type: integer }
+        helpful_count: { type: integer }
+        voted: { type: boolean }

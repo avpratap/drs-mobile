@@ -1,11 +1,14 @@
 import 'package:drs_api/src/model/address_in.dart';
 import 'package:drs_api/src/model/address_out.dart';
+import 'package:drs_api/src/model/address_update.dart';
 import 'package:drs_api/src/model/billing_summary.dart';
 import 'package:drs_api/src/model/cart_item_in.dart';
 import 'package:drs_api/src/model/cart_item_qty_in.dart';
 import 'package:drs_api/src/model/cart_line_out.dart';
 import 'package:drs_api/src/model/cart_out.dart';
 import 'package:drs_api/src/model/checkout_in.dart';
+import 'package:drs_api/src/model/consent_in.dart';
+import 'package:drs_api/src/model/consent_out.dart';
 import 'package:drs_api/src/model/deliver_item.dart';
 import 'package:drs_api/src/model/deliver_request.dart';
 import 'package:drs_api/src/model/delivery_order_item_out.dart';
@@ -17,6 +20,7 @@ import 'package:drs_api/src/model/device_token_out.dart';
 import 'package:drs_api/src/model/device_token_unregister_in.dart';
 import 'package:drs_api/src/model/fail_in.dart';
 import 'package:drs_api/src/model/http_validation_error.dart';
+import 'package:drs_api/src/model/helpful_out.dart';
 import 'package:drs_api/src/model/otp_request.dart';
 import 'package:drs_api/src/model/otp_request_response.dart';
 import 'package:drs_api/src/model/otp_verify.dart';
@@ -36,10 +40,14 @@ import 'package:drs_api/src/model/plan_line.dart';
 import 'package:drs_api/src/model/plan_out.dart';
 import 'package:drs_api/src/model/product_full_out.dart';
 import 'package:drs_api/src/model/product_out.dart';
+import 'package:drs_api/src/model/product_ratings_out.dart';
 import 'package:drs_api/src/model/profile_out.dart';
+import 'package:drs_api/src/model/profile_update.dart';
 import 'package:drs_api/src/model/quote_in.dart';
 import 'package:drs_api/src/model/quote_line_out.dart';
 import 'package:drs_api/src/model/quote_out.dart';
+import 'package:drs_api/src/model/rating_in.dart';
+import 'package:drs_api/src/model/rating_out.dart';
 import 'package:drs_api/src/model/refresh_request.dart';
 import 'package:drs_api/src/model/route_stop_out.dart';
 import 'package:drs_api/src/model/shipment_track_out.dart';
@@ -79,6 +87,8 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return AddressIn.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'AddressOut':
           return AddressOut.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'AddressUpdate':
+          return AddressUpdate.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'BillingSummary':
           return BillingSummary.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'CartItemIn':
@@ -91,6 +101,10 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return CartOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'CheckoutIn':
           return CheckoutIn.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'ConsentIn':
+          return ConsentIn.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'ConsentOut':
+          return ConsentOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'DeliverItem':
           return DeliverItem.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'DeliverRequest':
@@ -113,6 +127,8 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return FailIn.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'HTTPValidationError':
           return HTTPValidationError.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'HelpfulOut':
+          return HelpfulOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'OTPRequest':
           return OTPRequest.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'OTPRequestResponse':
@@ -151,14 +167,22 @@ final _regMap = RegExp(r'^Map<String,(.*)>$');
           return ProductFullOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'ProductOut':
           return ProductOut.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'ProductRatingsOut':
+          return ProductRatingsOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'ProfileOut':
           return ProfileOut.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'ProfileUpdate':
+          return ProfileUpdate.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'QuoteIn':
           return QuoteIn.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'QuoteLineOut':
           return QuoteLineOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'QuoteOut':
           return QuoteOut.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'RatingIn':
+          return RatingIn.fromJson(value as Map<String, dynamic>) as ReturnType;
+        case 'RatingOut':
+          return RatingOut.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'RefreshRequest':
           return RefreshRequest.fromJson(value as Map<String, dynamic>) as ReturnType;
         case 'RouteStopOut':
