@@ -24,6 +24,9 @@ enum DrsFlavor {
 /// | `DRS_API_BASE_URL`      | FastAPI origin, e.g. `https://api.example.com`  |
 /// | `DRS_RAZORPAY_KEY_ID`   | Razorpay *publishable* key id                   |
 /// | `DRS_FCM_SENDER_ID`     | Firebase Cloud Messaging sender id              |
+/// | `DRS_FIREBASE_API_KEY`  | Firebase API key (restricted, per platform)     |
+/// | `DRS_FIREBASE_PROJECT_ID` | Firebase project id                           |
+/// | `DRS_FIREBASE_APP_ID_ANDROID` / `_IOS` | Firebase app ids per platform    |
 /// | `DRS_GOOGLE_MAPS_API_KEY` | Maps SDK key (delivery app, later milestone)  |
 @immutable
 class DrsEnv {
@@ -33,6 +36,10 @@ class DrsEnv {
     this.razorpayKeyId = '',
     this.fcmSenderId = '',
     this.googleMapsApiKey = '',
+    this.firebaseApiKey = '',
+    this.firebaseProjectId = '',
+    this.firebaseAppIdAndroid = '',
+    this.firebaseAppIdIos = '',
   });
 
   /// Reads the values compiled in via `--dart-define`.
@@ -47,6 +54,14 @@ class DrsEnv {
       razorpayKeyId: const String.fromEnvironment('DRS_RAZORPAY_KEY_ID'),
       fcmSenderId: const String.fromEnvironment('DRS_FCM_SENDER_ID'),
       googleMapsApiKey: const String.fromEnvironment('DRS_GOOGLE_MAPS_API_KEY'),
+      firebaseApiKey: const String.fromEnvironment('DRS_FIREBASE_API_KEY'),
+      firebaseProjectId: const String.fromEnvironment(
+        'DRS_FIREBASE_PROJECT_ID',
+      ),
+      firebaseAppIdAndroid: const String.fromEnvironment(
+        'DRS_FIREBASE_APP_ID_ANDROID',
+      ),
+      firebaseAppIdIos: const String.fromEnvironment('DRS_FIREBASE_APP_ID_IOS'),
     );
   }
 
@@ -57,6 +72,10 @@ class DrsEnv {
   final String razorpayKeyId;
   final String fcmSenderId;
   final String googleMapsApiKey;
+  final String firebaseApiKey;
+  final String firebaseProjectId;
+  final String firebaseAppIdAndroid;
+  final String firebaseAppIdIos;
 
   bool get isProd => flavor == DrsFlavor.prod;
 
@@ -67,6 +86,18 @@ class DrsEnv {
   bool get hasRazorpay => razorpayKeyId.isNotEmpty;
   bool get hasFcm => fcmSenderId.isNotEmpty;
   bool get hasGoogleMaps => googleMapsApiKey.isNotEmpty;
+
+  /// Firebase app id for the platform, or '' if push isn't configured.
+  String firebaseAppId({required bool ios}) =>
+      ios ? firebaseAppIdIos : firebaseAppIdAndroid;
+
+  /// Push works only when every Firebase value for the platform is defined.
+  /// Otherwise the app runs with notifications disabled (no crash, no init).
+  bool hasFirebase({required bool ios}) =>
+      firebaseApiKey.isNotEmpty &&
+      firebaseProjectId.isNotEmpty &&
+      fcmSenderId.isNotEmpty &&
+      firebaseAppId(ios: ios).isNotEmpty;
 
   /// Returns human-readable problems with this config (empty == OK).
   /// Prod builds must talk TLS to a real host.
@@ -85,5 +116,6 @@ class DrsEnv {
   String toString() =>
       // Never print key material — only whether it is configured.
       'DrsEnv(flavor: ${flavor.name}, apiBaseUrl: $apiBaseUrl, '
-      'razorpay: $hasRazorpay, fcm: $hasFcm, maps: $hasGoogleMaps)';
+      'razorpay: $hasRazorpay, fcm: $hasFcm, maps: $hasGoogleMaps, '
+      'firebase: ${firebaseProjectId.isNotEmpty})';
 }
