@@ -4,7 +4,6 @@ import 'package:drs_ui/drs_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:hooks_riverpod/misc.dart';
 
 import '../../../core/push.dart';
 import '../../common/async_views.dart';
@@ -48,7 +47,7 @@ class NotificationPrefsScreen extends ConsumerWidget {
             ),
           ),
           switch ((profile, consents)) {
-            (AsyncData(value: final p), AsyncData(value: final c)) =>
+            (AsyncValue(value: final p?), AsyncValue(value: final c?)) =>
               _Categories(profile: p, consents: c),
             (AsyncError(), _) || (_, AsyncError()) => DrsEmptyState.error(
               title: "Couldn't load your preferences",
@@ -102,12 +101,12 @@ class _Categories extends HookConsumerWidget {
       ValueNotifier<bool?> state,
       bool next,
       Future<void> Function() call,
-      ProviderOrFamily refresh,
+      Future<void> Function() reload,
     ) async {
       state.value = next;
       try {
         await call();
-        ref.invalidate(refresh);
+        await reload();
       } on DrsApiError catch (e) {
         if (context.mounted) showSnack(context, e.message);
         state.value = null;
@@ -134,7 +133,7 @@ class _Categories extends HookConsumerWidget {
                     service,
                     v,
                     () => repo.updateProfile(notifyPush: v),
-                    profileProvider,
+                    () => ref.refresh(profileProvider.future),
                   ),
           ),
           const Divider(height: 1),
@@ -155,7 +154,7 @@ class _Categories extends HookConsumerWidget {
                       ConsentPurpose.marketingPush,
                       granted: v,
                     ),
-                    consentsProvider,
+                    () => ref.refresh(consentsProvider.future),
                   ),
           ),
         ],

@@ -5,7 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/harness.dart';
 import 'support/seed.dart';
 
-/// Same device matrix as responsive_test.dart, over the milestone-2 screens.
+/// Same device matrix as responsive_test.dart, over the commerce and account
+/// screens.
 const devices = <(String, Size, EdgeInsets, double)>[
   ('iPhone SE 320', Size(320, 568), EdgeInsets.only(top: 20), 1),
   ('small Android 1.5x text', Size(360, 640), EdgeInsets.only(top: 24), 1.5),
@@ -31,6 +32,12 @@ final screens = <(String, String)>[
   (Routes.addresses, 'Home'),
   (Routes.subscriptions, 'Home delivery'),
   (Routes.subscribeProduct(2), 'How often'),
+  // Milestone 5: account & engagement.
+  (Routes.profile, 'Full name'),
+  (Routes.editAddress, 'Home'), // no address passed → back to the list
+  (Routes.notificationPrefs, 'This device'),
+  (Routes.productReviews(2), 'Most helpful'),
+  (Routes.writeReview(2), 'Your rating'),
 ];
 
 void main() {
@@ -43,7 +50,11 @@ void main() {
       }),
       (t) async {
         setDevice(t, size, insets: insets, textScale: scale);
-        final h = Harness(server: seededServer());
+        final h = Harness(
+          server: seededServer()
+            ..seedReview(2, 5, comment: 'Fresh every morning.', helpful: 2)
+            ..seedReview(2, 4, reply: 'Thank you!'),
+        );
         await h.start(t);
 
         for (final (route, marker) in screens) {
