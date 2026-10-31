@@ -178,7 +178,7 @@ final class DrsApiProvider extends $FunctionalProvider<DrsApi, DrsApi, DrsApi>
   }
 }
 
-String _$drsApiHash() => r'c0bbd12529addd529360fdc76d0748a5557edcad';
+String _$drsApiHash() => r'4c56d3231bbe60f8782212c98ec88f642527fc4d';
 
 /// Local Drift database (catalogue cache — no personal data).
 

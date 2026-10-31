@@ -49,6 +49,15 @@ class DrsEmptyState extends StatelessWidget {
     this.actionLabel = 'Try again',
   }) : icon = Icons.cloud_off_outlined;
 
+  /// No connection: what failed ([title]) plus how to recover.
+  const DrsEmptyState.offline({
+    required this.title,
+    super.key,
+    this.onAction,
+    this.actionLabel = 'Try again',
+  }) : icon = Icons.wifi_off,
+       message = "You're offline. Check your connection and try again.";
+
   final String title;
   final String? message;
   final IconData icon;
@@ -142,6 +151,49 @@ class DrsOfflineBanner extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// App-wide connection strip, shown under the whole app (above the system
+/// navigation area) while the backend can't be reached. Screens keep showing
+/// what they already have; actions that need the server will say so.
+class DrsConnectionStrip extends StatelessWidget {
+  const DrsConnectionStrip({
+    required this.online,
+    required this.child,
+    super.key,
+    this.onRetry,
+  });
+
+  final bool online;
+  final Widget child;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (online) return child;
+    return Column(
+      children: [
+        Expanded(
+          // The strip takes the bottom safe area instead of the app.
+          child: MediaQuery.removePadding(
+            context: context,
+            removeBottom: true,
+            child: child,
+          ),
+        ),
+        Material(
+          color: Theme.of(context).colorScheme.tertiaryContainer,
+          child: SafeArea(
+            top: false,
+            child: DrsOfflineBanner(
+              message: "You're offline — saved information is shown where available.",
+              onRetry: onRetry,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

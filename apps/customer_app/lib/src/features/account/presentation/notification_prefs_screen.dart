@@ -49,13 +49,13 @@ class NotificationPrefsScreen extends ConsumerWidget {
           switch ((profile, consents)) {
             (AsyncValue(value: final p?), AsyncValue(value: final c?)) =>
               _Categories(profile: p, consents: c),
-            (AsyncError(), _) || (_, AsyncError()) => DrsEmptyState.error(
+            (AsyncError(:final error), _) ||
+            (_, AsyncError(:final error)) => errorState(
+              error,
               title: "Couldn't load your preferences",
-              onAction: () {
-                ref
-                  ..invalidate(profileProvider)
-                  ..invalidate(consentsProvider);
-              },
+              onRetry: () => ref
+                ..invalidate(profileProvider)
+                ..invalidate(consentsProvider),
             ),
             _ => const Padding(
               padding: EdgeInsets.all(DrsSpacing.lg),

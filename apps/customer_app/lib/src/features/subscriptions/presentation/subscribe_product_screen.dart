@@ -29,6 +29,7 @@ class SubscribeProductScreen extends ConsumerWidget {
       body: AsyncBody(
         value: detail,
         onRetry: () => ref.invalidate(productDetailProvider(productId)),
+        errorTitle: "Couldn't load this product",
         builder: (d) => switch (subs) {
           AsyncValue(:final value?) => _Form(
             detail: d,
@@ -41,10 +42,10 @@ class SubscribeProductScreen extends ConsumerWidget {
               (s) => s.status == SubscriptionStatus.cancelled,
             ),
           ),
-          AsyncValue(:final error?) => DrsEmptyState.error(
+          AsyncValue(:final error?) => errorState(
+            error,
             title: "Couldn't load your subscriptions",
-            message: errorMessage(error),
-            onAction: () => ref.invalidate(subscriptionsProvider),
+            onRetry: () => ref.invalidate(subscriptionsProvider),
           ),
           _ => const DrsLoading(),
         },

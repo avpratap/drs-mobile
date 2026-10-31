@@ -158,7 +158,7 @@ void main() {
     );
     await t.pumpAndSettle();
     expect(
-      find.text('Offline — showing your saved standing order.'),
+      find.text("You're offline — saved information is shown where available."),
       findsOneWidget,
     );
     expect(find.text('1 L · Every day'), findsOneWidget);

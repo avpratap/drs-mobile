@@ -22,10 +22,10 @@ class MapScreen extends ConsumerWidget {
           stops: value.effectiveStops,
           onSelect: (s) => context.push(Routes.stop(s.orderId)),
         ),
-        AsyncValue(:final error?) => DrsEmptyState.error(
+        AsyncValue(:final error?) => errorState(
+          error,
           title: "Couldn't load the route",
-          message: errorMessage(error),
-          onAction: () => ref.invalidate(routeProvider),
+          onRetry: () => ref.invalidate(routeProvider),
         ),
         _ => const DrsLoading(),
       },

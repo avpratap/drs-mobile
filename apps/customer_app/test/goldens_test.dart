@@ -127,4 +127,54 @@ void main() {
       );
     });
   }
+
+  // Milestone 7: connection and failure states.
+  testWidgets('golden: home_offline_strip_iphone15', (t) async {
+    setDevice(
+      t,
+      const Size(393, 852),
+      insets: const EdgeInsets.only(top: 59, bottom: 34),
+    );
+    final h = Harness(server: seededServer());
+    await h.start(t);
+    h.server.offline = true;
+    await goTo(t, Routes.orders); // a request fails -> app knows it's offline
+    await goTo(t, Routes.home);
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/home_offline_strip_iphone15.png'),
+    );
+  });
+
+  testWidgets('golden: wallet_offline_pixel7', (t) async {
+    setDevice(
+      t,
+      const Size(412, 915),
+      insets: const EdgeInsets.only(top: 24, bottom: 24),
+    );
+    final h = Harness(server: seededServer());
+    await h.start(t);
+    h.server.offline = true;
+    await goTo(t, Routes.wallet);
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/wallet_offline_pixel7.png'),
+    );
+  });
+
+  testWidgets('golden: wallet_server_error_pixel7', (t) async {
+    setDevice(
+      t,
+      const Size(412, 915),
+      insets: const EdgeInsets.only(top: 24, bottom: 24),
+    );
+    final h = Harness(server: seededServer());
+    await h.start(t);
+    h.server.failAllWith = 503;
+    await goTo(t, Routes.wallet);
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/wallet_server_error_pixel7.png'),
+    );
+  });
 }

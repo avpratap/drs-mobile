@@ -59,14 +59,9 @@ void main() {
       ),
       tokenStoreProvider.overrideWithValue(tokens),
       appDatabaseProvider.overrideWithValue(db),
-      drsApiProvider.overrideWith(
-        (ref) => buildDrsApi(
-          baseUrl: 'http://test',
-          tokenStore: tokens,
-          httpClientAdapter: backend,
-          onSessionExpired: ref.watch(sessionEventsProvider).notifyExpired,
-        ),
-      ),
+      // The app's real client (session + connectivity interceptors).
+      httpClientAdapterProvider.overrideWithValue(backend),
+      networkImagesProvider.overrideWithValue(false),
     ],
     child: const CustomerApp(),
   );
@@ -138,7 +133,12 @@ void main() {
     await t.pumpWidget(app());
     await t.pumpAndSettle();
 
+    // One app-wide strip (not a second per-screen banner).
     expect(find.byType(DrsOfflineBanner), findsOneWidget);
+    expect(
+      find.text("You're offline — saved information is shown where available."),
+      findsOneWidget,
+    );
     expect(find.byType(DrsProductCard), findsNWidgets(3));
   });
 

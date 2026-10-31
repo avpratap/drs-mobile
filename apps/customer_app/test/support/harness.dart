@@ -86,17 +86,11 @@ class Harness {
         env ?? const DrsEnv(flavor: DrsFlavor.dev, apiBaseUrl: 'http://test'),
       ),
       tokenStoreProvider.overrideWithValue(tokens),
-      // Fixed 8 am so time-of-day UI (greeting) is deterministic in goldens.
       networkImagesProvider.overrideWithValue(false),
+      // Fixed 8 am so time-of-day UI (greeting) is deterministic in goldens.
       clockProvider.overrideWithValue(() => DateTime(2026, 11, 1, 8)),
       appDatabaseProvider.overrideWithValue(db),
-      drsApiProvider.overrideWithValue(
-        buildDrsApi(
-          baseUrl: 'http://test',
-          tokenStore: tokens,
-          httpClientAdapter: server,
-        ),
-      ),
+      httpClientAdapterProvider.overrideWithValue(server),
       if (gateway != null) paymentGatewayProvider.overrideWithValue(gateway!),
       // No platform channel in tests: fixed version for About + goldens.
       appInfoProvider.overrideWith(

@@ -58,6 +58,10 @@ class FakeDrsServer implements HttpClientAdapter {
   bool loggedIn;
   bool offline = false;
 
+  /// When set, every non-auth request answers with this HTTP status
+  /// (e.g. 500/503 to exercise server-error states).
+  int? failAllWith;
+
   /// Paths (e.g. `POST /api/v1/cart/checkout`) that fail with a connection
   /// error ONCE, to exercise idempotent retries.
   final failOnceWithNetwork = <String>{};
@@ -324,6 +328,10 @@ class FakeDrsServer implements HttpClientAdapter {
     if (offline || failOnceWithNetwork.remove(call.key)) {
       throw DioException.connectionError(requestOptions: o, reason: 'offline');
     }
+    if (failAllWith case final status?
+        when !o.path.startsWith('/api/v1/auth')) {
+      return FakeBackend.json(status, {'detail': 'Service unavailable'});
+    }
     final r = _route(call);
     return FakeBackend.json(r.$1, r.$2);
   }
@@ -587,7 +595,11 @@ class FakeDrsServer implements HttpClientAdapter {
       return (200, o);
     }
     if (match(r'/api/v1/orders/(\d+)') case final mm?) {
-      return (200, _order(int.parse(mm[1]!)));
+      final id = int.parse(mm[1]!);
+      if (!orders.any((o) => o['id'] == id)) {
+        return (404, {'detail': 'Order not found'});
+      }
+      return (200, _order(id));
     }
     // addresses
     if (p == '/api/v1/addresses' && m == 'GET') return (200, addresses);

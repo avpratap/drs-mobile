@@ -163,10 +163,10 @@ class TodayScreen extends ConsumerWidget {
             );
           },
         ),
-        AsyncValue(:final error?) => DrsEmptyState.error(
+        AsyncValue(:final error?) => errorState(
+          error,
           title: "Couldn't load today's route",
-          message: errorMessage(error),
-          onAction: () => refresh(ref),
+          onRetry: () => refresh(ref),
         ),
         _ => const DrsLoading(message: "Loading today's route…"),
       },

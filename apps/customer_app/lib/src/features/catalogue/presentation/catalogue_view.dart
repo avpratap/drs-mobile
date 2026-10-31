@@ -33,11 +33,12 @@ class CatalogueView extends ConsumerWidget {
     return switch (catalogue) {
       AsyncValue(:final value?) => Column(
         children: [
-          if (value.fromCache && value.error != null)
+          // Offline is shown app-wide; here only "server had a problem".
+          if (value.fromCache &&
+              value.error != null &&
+              !value.error!.isConnectivity)
             DrsOfflineBanner(
-              message: value.error!.isConnectivity
-                  ? "You're offline — showing saved products."
-                  : "Couldn't refresh — showing saved products.",
+              message: "Couldn't refresh — showing saved products.",
               onRetry: () => refresh(ref),
             ),
           Expanded(
@@ -59,19 +60,13 @@ class CatalogueView extends ConsumerWidget {
           ),
         ],
       ),
-      AsyncValue(:final error?) => DrsEmptyState.error(
+      AsyncValue(:final error?) => errorState(
+        error,
         title: "Couldn't load products",
-        message: error is Exception ? _message(error) : null,
-        onAction: () => refresh(ref),
+        onRetry: () => refresh(ref),
       ),
       _ => const DrsLoading(message: 'Fetching fresh products…'),
     };
-  }
-
-  static String? _message(Exception e) {
-    final text = e.toString();
-    final i = text.indexOf(': ');
-    return i == -1 ? null : text.substring(i + 2);
   }
 }
 

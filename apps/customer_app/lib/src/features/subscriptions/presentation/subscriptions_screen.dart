@@ -39,9 +39,12 @@ class SubscriptionsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      banner: subs.value?.fromCache ?? false
+      // Offline is shown app-wide; here only "server had a problem".
+      banner:
+          (subs.value?.fromCache ?? false) &&
+              !(subs.value?.error?.isConnectivity ?? true)
           ? DrsOfflineBanner(
-              message: 'Offline — showing your saved standing order.',
+              message: "Couldn't refresh — showing your saved standing order.",
               onRetry: refresh,
             )
           : null,
