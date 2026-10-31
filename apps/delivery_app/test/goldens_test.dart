@@ -43,6 +43,12 @@ void main() {
       const Size(1194, 834),
       const EdgeInsets.only(top: 24, bottom: 20),
     ),
+    (
+      'about_pixel7',
+      Routes.about,
+      const Size(412, 915),
+      const EdgeInsets.only(top: 24, bottom: 24),
+    ),
   ];
 
   for (final (name, route, size, insets) in shots) {

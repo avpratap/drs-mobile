@@ -24,6 +24,8 @@ final screens = <(String, String)>[
   (Routes.stop(11), 'Deliver to'),
   (Routes.deliver(11), 'Delivered items'),
   (Routes.map, 'Open route in Google Maps'),
+  (Routes.about, 'Version 1.0.0 (12)'),
+  (Routes.privacyNotice, 'What we collect'),
 ];
 
 void main() {

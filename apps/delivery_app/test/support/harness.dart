@@ -3,6 +3,7 @@ import 'package:delivery_app/src/core/providers.dart';
 import 'package:delivery_app/src/core/push.dart';
 import 'package:delivery_app/src/data/delivery_database.dart';
 import 'package:delivery_app/src/data/pod_files.dart';
+import 'package:delivery_app/src/features/about/about_screens.dart';
 import 'package:delivery_app/src/features/route/route_providers.dart';
 import 'package:delivery_app/src/features/stop/external_actions.dart';
 import 'package:delivery_app/src/features/stop/pod_camera.dart';
@@ -11,6 +12,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:drs_api/drs_api_session.dart';
 import 'package:drs_core/drs_core.dart';
+import 'package:drs_ui/drs_ui.dart' show DrsAppInfo;
 import 'package:drs_ui/testing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -104,6 +106,15 @@ class Harness {
       }),
       autoSyncProvider.overrideWithValue(false),
       routeDayProvider.overrideWithValue(DateTime.utc(2026, 11, 1)),
+      // No platform channel in tests: fixed version for About + goldens.
+      appInfoProvider.overrideWith(
+        (ref) async => DrsAppInfo(
+          appName: 'DRS Delivery',
+          version: '1.0.0',
+          buildNumber: '12',
+          env: ref.watch(envProvider),
+        ),
+      ),
       if (push != null) ...pushOverrides(platform: push, prefs: pushPrefs),
     ],
     child: const DeliveryApp(),

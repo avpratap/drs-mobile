@@ -191,7 +191,9 @@ void main() {
     await h.start(t);
     h.server.offline = true;
     await _deliver(t);
-    await t.tap(find.byTooltip('Log out'));
+    await t.tap(find.byTooltip('More'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Log out'));
     await t.pumpAndSettle();
     expect(find.textContaining('1 update(s) have not synced'), findsOneWidget);
     await t.tap(find.text('Log out').last);
