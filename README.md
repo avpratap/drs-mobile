@@ -38,6 +38,51 @@ cd apps/customer_app
 flutter run --dart-define-from-file=../../env/dev.json
 ```
 
+## Platforms
+
+Both apps target **Android and iOS**.
+
+| | customer_app | delivery_app |
+|---|---|---|
+| Android `applicationId` | `in.drsdairy.customer` | `in.drsdairy.delivery` |
+| iOS bundle id | `in.drsdairy.customer` | `in.drsdairy.delivery` |
+| Android SDK | min 24 (7.0) · target 36 · compile 36 | same |
+| iOS minimum | 15.0 (Xcode project + Podfile) | same |
+| Display name | DRS | DRS Delivery |
+
+Kotlin treats `in` as a keyword, so `MainActivity.kt` uses
+``package `in`.drsdairy.…``; Gradle `namespace`/`applicationId` need no escaping.
+
+**Toolchain:** Gradle 9.3.1 wrapper, AGP 9.1, Kotlin 2.4, JDK 17. iOS uses
+Swift Package Manager for plugins (Flutter default) with a `Podfile`
+(`platform :ios, '15.0'`) for any CocoaPods-only plugin. Run
+`flutter build ios` / `pod install` on macOS with the Xcode version Flutter 3.47 supports (`flutter doctor` checks it).
+
+**Permissions (declared now, requested at runtime when the feature ships):**
+
+| | Android `AndroidManifest.xml` | iOS `Info.plist` |
+|---|---|---|
+| Both apps | `INTERNET`, `POST_NOTIFICATIONS` (FCM, Android 13+) | `UIBackgroundModes: remote-notification` (push needs no usage string; add the Push Notifications capability when FCM lands) |
+| delivery_app | `ACCESS_FINE/COARSE_LOCATION`, `CAMERA` (features marked not required) | `NSLocationWhenInUseUsageDescription`, `NSCameraUsageDescription` (placeholder copy) |
+
+Background location is **not** requested. Live tracking with the screen off
+is planned as an Android location foreground service (+ iOS `location`
+background mode), enabled together with that feature; the lines are
+present but commented out.
+
+**Release signing:** `android/key.properties` (git-ignored) with
+`storeFile`, `storePassword`, `keyAlias`, `keyPassword`; falls back to the debug
+key when absent. iOS signing is configured per developer / CI in Xcode.
+
+**Responsive & adaptive UI** (`drs_ui`): `DrsWindowSize` breakpoints
+(compact < 600 ≤ medium < 840 ≤ expanded); bottom `NavigationBar` on phones,
+`NavigationRail` in landscape / tablets; multi-column catalogue via
+`DrsAdaptiveSliverList` (rows keep intrinsic height so text scaling still
+works); `SafeArea` on all edges (notch, Dynamic Island, landscape cut-outs,
+home indicator); platform-adaptive spinners, pull-to-refresh, dialogs and
+app-bar title alignment. A widget-test matrix covers 320 dp phones, notched
+iPhones, landscape and iPad on both `TargetPlatform.android` and `.iOS`.
+
 ## Configuration — no secrets in the repo
 
 All environment-specific values are compile-time `--dart-define`s read by
@@ -100,4 +145,8 @@ immediately; CI fails if they are stale.
 
 ## CI
 
-`.github/workflows/ci.yaml`: bootstrap → codegen-is-fresh check → analyze → test.
+`.github/workflows/ci.yaml`:
+
+1. bootstrap → codegen-is-fresh check → analyze → test (Ubuntu)
+2. `flutter build apk --debug` for both apps (Ubuntu runner with the Android SDK; APKs uploaded as artifacts)
+3. `flutter build ios --debug --no-codesign` for both apps (macOS runner with Xcode)

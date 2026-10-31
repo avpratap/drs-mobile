@@ -28,5 +28,14 @@ You need a backend user with role `delivery` to get past login.
 flutter test
 ```
 
-> Android `applicationId` / iOS bundle id are placeholders
-> (`com.drsdairy.delivery_app`) — confirm before store setup.
+## Platforms
+
+Android `in.drsdairy.delivery` (min SDK 24, target 36) · iOS
+`in.drsdairy.delivery` (iOS 15.0+). Declared permissions: notifications,
+foreground location (route + rider position), camera (proof of delivery).
+Background location is deliberately not requested yet — see the root README.
+
+```bash
+flutter build apk --debug                 # Android (needs Android SDK)
+flutter build ios --debug --no-codesign   # iOS (needs macOS + Xcode)
+```

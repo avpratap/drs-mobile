@@ -57,5 +57,13 @@ flutter test
 Tests use an in-memory Drift database and a scripted HTTP adapter — no
 network or device needed.
 
-> Android `applicationId` / iOS bundle id are placeholders
-> (`com.drsdairy.customer_app`) — confirm the final ids before store setup.
+## Platforms
+
+Android `in.drsdairy.customer` (min SDK 24, target 36) · iOS
+`in.drsdairy.customer` (iOS 15.0+). Permissions: notifications only.
+See the root README for build toolchain and signing.
+
+```bash
+flutter build apk --debug                 # Android (needs Android SDK)
+flutter build ios --debug --no-codesign   # iOS (needs macOS + Xcode)
+```
