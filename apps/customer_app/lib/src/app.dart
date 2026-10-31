@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'core/providers.dart';
+import 'core/push.dart';
 import 'routing/app_router.dart';
 
 class CustomerApp extends ConsumerWidget {
@@ -31,6 +32,7 @@ class CustomerApp extends ConsumerWidget {
       // Light is the reference brand experience; dark is opt-in for now.
       themeMode: ThemeMode.light,
       routerConfig: ref.watch(appRouterProvider),
+      builder: (context, child) => PushBridge(child: child!),
     );
   }
 }

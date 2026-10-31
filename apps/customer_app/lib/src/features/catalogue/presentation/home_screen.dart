@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../core/push.dart';
 import '../../../routing/routes.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../cart/presentation/cart_button.dart';
@@ -50,6 +51,7 @@ class HomeScreen extends ConsumerWidget {
                       style: theme.textTheme.headlineSmall,
                     ),
                     const SizedBox(height: DrsSpacing.md),
+                    const NotificationsOptInCard(),
                     const _HeroCard(),
                     const SizedBox(height: DrsSpacing.lg),
                     Row(

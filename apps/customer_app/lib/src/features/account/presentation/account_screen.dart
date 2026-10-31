@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../core/push.dart';
 import '../../../routing/routes.dart';
 import '../../auth/application/auth_controller.dart';
 
@@ -63,6 +64,7 @@ class AccountScreen extends HookConsumerWidget {
               subtitle: 'Saved delivery addresses',
               route: Routes.addresses,
             ),
+            const NotificationsSettingsTile(),
             const _ComingSoonTile(
               icon: Icons.privacy_tip_outlined,
               title: 'Privacy & data',
