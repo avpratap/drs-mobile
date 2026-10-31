@@ -103,6 +103,10 @@ class RiderAuth extends _$RiderAuth {
       }
     }
     await _tokens.clear();
+    // DPDP: route/contact cache, unsynced actions and POD photos go with
+    // the session.
+    await ref.read(deliveryDatabaseProvider).clearAll();
+    await ref.read(podFilesProvider).discardAll();
     if (ref.mounted) state = const AsyncData(null);
   }
 }

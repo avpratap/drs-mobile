@@ -170,3 +170,135 @@ final class DrsApiProvider extends $FunctionalProvider<DrsApi, DrsApi, DrsApi>
 }
 
 String _$drsApiHash() => r'56584b908e825e2aa0de0cb7afdd0bde1c3ccca0';
+
+@ProviderFor(deliveryDatabase)
+final deliveryDatabaseProvider = DeliveryDatabaseProvider._();
+
+final class DeliveryDatabaseProvider
+    extends
+        $FunctionalProvider<
+          DeliveryDatabase,
+          DeliveryDatabase,
+          DeliveryDatabase
+        >
+    with $Provider<DeliveryDatabase> {
+  DeliveryDatabaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'deliveryDatabaseProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$deliveryDatabaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<DeliveryDatabase> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DeliveryDatabase create(Ref ref) {
+    return deliveryDatabase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DeliveryDatabase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DeliveryDatabase>(value),
+    );
+  }
+}
+
+String _$deliveryDatabaseHash() => r'e744b686db294369c6e1d707946d9b179b9f17a2';
+
+@ProviderFor(podFiles)
+final podFilesProvider = PodFilesProvider._();
+
+final class PodFilesProvider
+    extends $FunctionalProvider<PodFiles, PodFiles, PodFiles>
+    with $Provider<PodFiles> {
+  PodFilesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'podFilesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$podFilesHash();
+
+  @$internal
+  @override
+  $ProviderElement<PodFiles> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PodFiles create(Ref ref) {
+    return podFiles(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PodFiles value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PodFiles>(value),
+    );
+  }
+}
+
+String _$podFilesHash() => r'1ab0ea9333a154d8e0257e1d13d849ce8b28b3cf';
+
+/// Background sync triggers (connectivity, resume, timer). Off in tests.
+
+@ProviderFor(autoSync)
+final autoSyncProvider = AutoSyncProvider._();
+
+/// Background sync triggers (connectivity, resume, timer). Off in tests.
+
+final class AutoSyncProvider extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Background sync triggers (connectivity, resume, timer). Off in tests.
+  AutoSyncProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'autoSyncProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$autoSyncHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return autoSync(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$autoSyncHash() => r'f0212f956b59545a8108c2b046506e6ebdb13726';

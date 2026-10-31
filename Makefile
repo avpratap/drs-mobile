@@ -42,7 +42,7 @@ api-spec: ## Export the full OpenAPI spec from a local drs-backend checkout (BAC
 
 api-gen: $(OAG_JAR) ## Regenerate packages/drs_api from SPEC (dart-dio, json_serializable)
 	java -jar $(OAG_JAR) generate -c openapi/generator-config.yaml -i $(SPEC)
-	cd packages/drs_api && dart run build_runner build --delete-conflicting-outputs
+	cd packages/drs_api && dart run build_runner build
 	cd packages/drs_api && $(FLUTTER) analyze --no-pub . && dart test
 
 api-check: $(OAG_JAR) ## Validate SPEC
