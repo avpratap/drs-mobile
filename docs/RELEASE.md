@@ -142,6 +142,25 @@ Sign-in steps need a backend that returns `dev_otp` (non-prod); against a
 prod backend they are skipped. The first request may take ~1 min while a
 free-tier host wakes up.
 
+## Measuring performance
+
+Both apps emit Timeline markers `drs.first_frame` and `drs.content_shown`
+(catalogue / today's route on screen) with milliseconds since `main()`.
+Measure on a real mid-range Android phone, in profile mode:
+
+```bash
+cd apps/customer_app
+flutter run --profile --flavor dev --trace-startup   # writes build/start_up_info.json
+```
+
+Debug/profile logs also print `[startup] first_frame: … ms`. Scrolling:
+open DevTools → Performance and fling Shop / Today; frames should stay
+under 16 ms. What keeps them cheap: lazily built lists (Shop, Home, Today
+per shop), images decoded at display size and cached on disk
+(`DrsNetworkImage`), and no network wait at launch (a stored session opens
+the app straight away from the device cache and confirms in the
+background).
+
 ## Pre-release checklist
 
 - [ ] CI green (analyze, tests, goldens, Android dev/prod, iOS dev/prod)

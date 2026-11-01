@@ -52,6 +52,7 @@ class TodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(routeViewProvider);
+    if (view.hasValue) DrsStartupTrace.mark('content_shown');
     final pending = ref.watch(pendingActionsProvider).value ?? const [];
     final sync = ref.watch(syncControllerProvider);
     final day = ref.watch(routeDayProvider);
@@ -271,72 +272,81 @@ class _RouteList extends ConsumerWidget {
     final groups = ShopGroup.group(view.effectiveStops);
     final byOrder = {for (final v in view.stops) v.stop.orderId: v};
 
-    return RefreshIndicator.adaptive(
-      onRefresh: () => TodayScreen.refresh(ref),
-      child: ListView(
-        padding: const EdgeInsets.all(DrsSpacing.md),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(DrsSpacing.md),
-              child: Semantics(
-                container: true,
-                label:
-                    '${summary.done} of ${summary.total} delivered, '
-                    '${summary.failed} failed, ${summary.remaining} remaining'
-                    '${view.fetchedAt == null ? '' : ', updated ${clockTime(view.fetchedAt!)}'}',
-                excludeSemantics: true,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1]} '
-                      '${day.day}/${day.month}',
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: DrsSpacing.xs),
-                    Text(
-                      '${summary.done} of ${summary.total} delivered',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: DrsSpacing.xs),
-                    LinearProgressIndicator(
-                      value: summary.total == 0
-                          ? 0
-                          : (summary.done + summary.failed) / summary.total,
-                      minHeight: 6,
-                      borderRadius: BorderRadius.circular(DrsRadius.pill),
-                    ),
-                    const SizedBox(height: DrsSpacing.xs),
-                    Text(
-                      '${summary.remaining} remaining · ${summary.failed} failed',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    if (view.fetchedAt case final at?)
-                      Text(
-                        'Updated ${clockTime(at)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                  ],
+    // Header widgets, then one lazily built card per shop: long routes only
+    // build what's on screen (ListView.builder), keeping scrolling smooth.
+    final header = <Widget>[
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(DrsSpacing.md),
+          child: Semantics(
+            container: true,
+            label:
+                '${summary.done} of ${summary.total} delivered, '
+                '${summary.failed} failed, ${summary.remaining} remaining'
+                '${view.fetchedAt == null ? '' : ', updated ${clockTime(view.fetchedAt!)}'}',
+            excludeSemantics: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1]} '
+                  '${day.day}/${day.month}',
+                  style: theme.textTheme.labelLarge,
                 ),
-              ),
+                const SizedBox(height: DrsSpacing.xs),
+                Text(
+                  '${summary.done} of ${summary.total} delivered',
+                  style: theme.textTheme.titleLarge,
+                ),
+                const SizedBox(height: DrsSpacing.xs),
+                LinearProgressIndicator(
+                  value: summary.total == 0
+                      ? 0
+                      : (summary.done + summary.failed) / summary.total,
+                  minHeight: 6,
+                  borderRadius: BorderRadius.circular(DrsRadius.pill),
+                ),
+                const SizedBox(height: DrsSpacing.xs),
+                Text(
+                  '${summary.remaining} remaining · ${summary.failed} failed',
+                  style: theme.textTheme.bodySmall,
+                ),
+                if (view.fetchedAt case final at?)
+                  Text(
+                    'Updated ${clockTime(at)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: DrsSpacing.md),
-          const NotificationsOptInCard(),
-          if (groups.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: DrsSpacing.xl),
-              child: DrsEmptyState(
-                icon: Icons.local_shipping_outlined,
-                title: 'No deliveries for today',
-                message: "Your route will appear here once it's assigned. Pull down to refresh.",
-              ),
-            ),
-          for (final g in groups) ...[
-            DrsSection(
+        ),
+      ),
+      const SizedBox(height: DrsSpacing.md),
+      const NotificationsOptInCard(),
+      if (groups.isEmpty)
+        const Padding(
+          padding: EdgeInsets.only(top: DrsSpacing.xl),
+          child: DrsEmptyState(
+            icon: Icons.local_shipping_outlined,
+            title: 'No deliveries for today',
+            message: "Your route will appear here once it's assigned. Pull down to refresh.",
+          ),
+        ),
+    ];
+
+    return RefreshIndicator.adaptive(
+      onRefresh: () => TodayScreen.refresh(ref),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(DrsSpacing.md),
+        itemCount: header.length + groups.length,
+        itemBuilder: (context, i) {
+          if (i < header.length) return header[i];
+          final g = groups[i - header.length];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: DrsSpacing.sm),
+            child: DrsSection(
               title: g.name,
               trailing: DrsStatusChip(
                 label: '${g.doneCount}/${g.stops.length} done',
@@ -353,9 +363,8 @@ class _RouteList extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: DrsSpacing.sm),
-          ],
-        ],
+          );
+        },
       ),
     );
   }

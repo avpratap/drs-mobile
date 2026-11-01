@@ -7,6 +7,7 @@ export 'src/notifications/firebase_push_platform.dart';
 export 'src/notifications/notifications_controller.dart';
 export 'src/notifications/push_platform.dart';
 export 'src/notifications/secure_push_prefs.dart';
+export 'src/perf/startup_trace.dart';
 export 'src/theme/drs_breakpoints.dart';
 export 'src/theme/drs_colors.dart';
 export 'src/theme/drs_spacing.dart';

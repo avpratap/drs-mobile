@@ -55,7 +55,7 @@ class FakeDeliveryServer implements HttpClientAdapter {
   final deviceTokens = <String, String>{};
   int writesApplied = 0;
 
-  static Map<String, Object?> _order(
+  static Map<String, Object?> order(
     int id,
     int shop,
     String shopName,
@@ -96,7 +96,7 @@ class FakeDeliveryServer implements HttpClientAdapter {
   };
 
   final orders = <Map<String, Object?>>[
-    _order(
+    order(
       11,
       1,
       'Shyam Dairy, Malviya Nagar',
@@ -108,7 +108,7 @@ class FakeDeliveryServer implements HttpClientAdapter {
       phone: '+919876543210',
       due: 94,
     ),
-    _order(
+    order(
       12,
       1,
       'Shyam Dairy, Malviya Nagar',
@@ -119,7 +119,7 @@ class FakeDeliveryServer implements HttpClientAdapter {
       contact: 'Ravi Kumar',
       phone: '+919812345678',
     ),
-    _order(
+    order(
       13,
       2,
       'Gopal Kirana, Vaishali Nagar',

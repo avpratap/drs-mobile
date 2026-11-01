@@ -30,6 +30,7 @@ class CatalogueView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final catalogue = ref.watch(catalogueProvider);
+    if (catalogue.hasValue) DrsStartupTrace.mark('content_shown');
     return switch (catalogue) {
       AsyncValue(:final value?) => Column(
         children: [

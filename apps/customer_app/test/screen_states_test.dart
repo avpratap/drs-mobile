@@ -126,4 +126,12 @@ void main() {
     await t.pumpAndSettle();
     expect(strip, isFalse);
   });
+
+  testWidgets('a stored session the server has revoked ends on sign-in '
+      '(the app opens at once, then confirms in the background)', (t) async {
+    setDevice(t, const Size(412, 915));
+    final h = Harness(server: FakeDrsServer(loggedIn: false));
+    await h.start(t);
+    expect(find.text('Send OTP'), findsOneWidget);
+  });
 }

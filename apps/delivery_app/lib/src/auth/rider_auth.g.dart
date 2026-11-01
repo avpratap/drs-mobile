@@ -36,7 +36,7 @@ final class RiderAuthProvider
   RiderAuth create() => RiderAuth();
 }
 
-String _$riderAuthHash() => r'27d4c9980c680e3a1372e13bbf331864274cef2a';
+String _$riderAuthHash() => r'682f7a10acb74368f68b43e3a5017ce81670a123';
 
 /// Signed-in rider, or null when signed out.
 
