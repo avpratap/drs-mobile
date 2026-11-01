@@ -26,7 +26,12 @@ class HomeScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return DrsScaffold(
-      appBar: const DrsAppBar(actions: [CartAction()]),
+      // Phones show the brand lockup here; on tablets the navigation rail
+      // already carries it, so the header just names the page.
+      appBar: DrsAppBar(
+        title: DrsWindowSize.of(context).isCompact ? null : 'Home',
+        actions: const [CartAction()],
+      ),
       maxContentWidth: DrsSpacing.maxWideContentWidth,
       body: CatalogueView(
         builder: (context, snapshot) {

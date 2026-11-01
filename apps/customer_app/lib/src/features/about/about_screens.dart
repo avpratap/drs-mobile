@@ -23,7 +23,6 @@ class AboutScreen extends ConsumerWidget {
       onRetry: () => ref.invalidate(appInfoProvider),
       builder: (info) => DrsAboutView(
         info: info,
-        tagline: 'Pure dairy, daily',
         onPrivacyNotice: () => context.push(Routes.privacyNotice),
       ),
     ),

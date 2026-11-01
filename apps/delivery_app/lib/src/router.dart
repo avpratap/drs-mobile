@@ -39,11 +39,7 @@ GoRouter router(Ref ref) {
       return loc.startsWith(Routes.today) ? null : Routes.today;
     },
     routes: [
-      GoRoute(
-        path: Routes.splash,
-        builder: (_, _) =>
-            const Scaffold(body: Center(child: DrsLogo(size: 56))),
-      ),
+      GoRoute(path: Routes.splash, builder: (_, _) => const DrsBrandSplash()),
       GoRoute(path: Routes.login, builder: (_, _) => const LoginScreen()),
       GoRoute(
         path: Routes.today,

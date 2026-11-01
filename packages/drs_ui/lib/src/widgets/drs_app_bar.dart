@@ -23,7 +23,7 @@ class DrsAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) => AppBar(
-    title: title == null ? const DrsLogo(size: 24) : Text(title!),
+    title: title == null ? const DrsLogo(size: 36) : Text(title!),
     leading: leading,
     actions: actions,
     bottom: bottom,
