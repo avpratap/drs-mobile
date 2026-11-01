@@ -104,11 +104,17 @@ void main() {
     setDevice(t, const Size(412, 915));
     await h.start(t);
     expect(find.text('1 of 3 delivered'), findsOneWidget);
+    expect(find.text('Updated 8:00 am'), findsOneWidget);
 
     h.server.offline = true;
+    h.now = DateTime(2026, 11, 1, 8, 35);
     await t.fling(find.byType(Scrollable).first, const Offset(0, 400), 1000);
     await t.pumpAndSettle();
-    expect(find.textContaining("You're offline"), findsOneWidget);
+    // Says how old the saved route is.
+    expect(
+      find.text('Offline — showing the route saved at 8:00 am (35 min ago).'),
+      findsOneWidget,
+    );
     expect(find.text('Shyam Dairy, Malviya Nagar'), findsOneWidget);
   });
 

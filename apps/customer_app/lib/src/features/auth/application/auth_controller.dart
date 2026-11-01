@@ -44,12 +44,24 @@ class AuthController extends _$AuthController {
 
     final repo = ref.watch(authRepositoryProvider);
     if (!await repo.hasSession()) return const SignedOut();
+    // Fast, offline-first cold start: a stored session opens the app at
+    // once; the profile loads in the background. A revoked session is
+    // caught by the refresh interceptor (-> session expired -> SignedOut).
+    unawaited(Future<void>(_loadProfileAfterStart));
+    return const SignedIn(null);
+  }
+
+  Future<void> _loadProfileAfterStart() async {
     try {
-      return SignedIn(await repo.currentAccount());
+      final account = await ref.read(authRepositoryProvider).currentAccount();
+      if (ref.mounted && state.value is SignedIn) {
+        state = AsyncData(SignedIn(account));
+      }
     } on DrsApiError catch (e) {
-      if (e.kind == DrsApiErrorKind.unauthorized) return const SignedOut();
-      // Offline-first: keep the session, load the profile later.
-      return const SignedIn(null);
+      if (e.kind == DrsApiErrorKind.unauthorized && ref.mounted) {
+        state = const AsyncData(SignedOut());
+      }
+      // Offline / server trouble: stay signed in with what we have.
     }
   }
 

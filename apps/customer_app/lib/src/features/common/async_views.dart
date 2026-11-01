@@ -23,14 +23,37 @@ class AsyncBody<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) => switch (value) {
     AsyncValue(:final T value, hasValue: true) => builder(value),
-    AsyncValue(:final error?) => DrsEmptyState.error(
+    AsyncValue(:final error?) => errorState(
+      error,
       title: errorTitle,
-      message: errorMessage(error),
-      onAction: onRetry,
+      onRetry: onRetry,
     ),
     _ => DrsLoading(message: loadingMessage),
   };
 }
+
+/// The state for a failed load: offline (wifi-off, connection advice),
+/// not found (no retry), or an error with "Try again".
+Widget errorState(
+  Object error, {
+  required String title,
+  VoidCallback? onRetry,
+}) => switch (error) {
+  DrsApiError(isConnectivity: true) => DrsEmptyState.offline(
+    title: title,
+    onAction: onRetry,
+  ),
+  DrsApiError(kind: DrsApiErrorKind.notFound) => DrsEmptyState(
+    icon: Icons.search_off,
+    title: title,
+    message: 'It may have been removed, or the link is out of date.',
+  ),
+  _ => DrsEmptyState.error(
+    title: title,
+    message: errorMessage(error),
+    onAction: onRetry,
+  ),
+};
 
 String errorMessage(Object error) =>
     error is DrsApiError ? error.message : 'Please try again.';

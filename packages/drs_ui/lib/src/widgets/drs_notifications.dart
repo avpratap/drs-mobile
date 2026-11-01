@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../notifications/push_platform.dart';
 import '../theme/drs_spacing.dart';
 import 'drs_button.dart';
+import 'drs_toggles.dart';
 
 /// In-app opt-in shown before the OS prompt, with plain-language consent
 /// (DPDP): what is sent, why, and how to turn it off.
@@ -114,7 +115,7 @@ class DrsNotificationSettingsTile extends StatelessWidget {
         : on
         ? 'On for this device'
         : 'Off';
-    return SwitchListTile.adaptive(
+    return DrsSwitchTile(
       secondary: Icon(
         on
             ? Icons.notifications_active_outlined

@@ -4,6 +4,7 @@
 library;
 
 export 'src/session/api_error.dart';
+export 'src/session/connectivity_interceptor.dart';
 export 'src/session/device_tokens.dart';
 export 'src/session/drs_api_factory.dart';
 export 'src/session/session_interceptor.dart';

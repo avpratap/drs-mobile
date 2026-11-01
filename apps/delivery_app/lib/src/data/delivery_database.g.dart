@@ -366,6 +366,18 @@ class $PendingActionsTable extends PendingActions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _nextAttemptAtMeta = const VerificationMeta(
+    'nextAttemptAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextAttemptAt =
+      GeneratedColumn<DateTime>(
+        'next_attempt_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -388,6 +400,7 @@ class $PendingActionsTable extends PendingActions
     state,
     attempts,
     lastError,
+    nextAttemptAt,
     createdAt,
   ];
   @override
@@ -461,6 +474,15 @@ class $PendingActionsTable extends PendingActions
         lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
       );
     }
+    if (data.containsKey('next_attempt_at')) {
+      context.handle(
+        _nextAttemptAtMeta,
+        nextAttemptAt.isAcceptableOrUnknown(
+          data['next_attempt_at']!,
+          _nextAttemptAtMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -514,6 +536,10 @@ class $PendingActionsTable extends PendingActions
         DriftSqlType.string,
         data['${effectivePrefix}last_error'],
       ),
+      nextAttemptAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_attempt_at'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -539,10 +565,15 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
   final String? photoPath;
   final String? photoRef;
 
-  /// `queued` (will be retried automatically) | `failed` (needs the rider).
+  /// `queued` (retried automatically) | `failed` (the server rejected it;
+  /// needs the rider) | `conflict` (the office already changed this stop;
+  /// the rider acknowledges and sees the server's version).
   final String state;
   final int attempts;
   final String? lastError;
+
+  /// Backoff: not retried automatically before this time (v2).
+  final DateTime? nextAttemptAt;
   final DateTime createdAt;
   const PendingAction({
     required this.id,
@@ -554,6 +585,7 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
     required this.state,
     required this.attempts,
     this.lastError,
+    this.nextAttemptAt,
     required this.createdAt,
   });
   @override
@@ -573,6 +605,9 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
     map['attempts'] = Variable<int>(attempts);
     if (!nullToAbsent || lastError != null) {
       map['last_error'] = Variable<String>(lastError);
+    }
+    if (!nullToAbsent || nextAttemptAt != null) {
+      map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -595,6 +630,9 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
       lastError: lastError == null && nullToAbsent
           ? const Value.absent()
           : Value(lastError),
+      nextAttemptAt: nextAttemptAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextAttemptAt),
       createdAt: Value(createdAt),
     );
   }
@@ -614,6 +652,7 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
       state: serializer.fromJson<String>(json['state']),
       attempts: serializer.fromJson<int>(json['attempts']),
       lastError: serializer.fromJson<String?>(json['lastError']),
+      nextAttemptAt: serializer.fromJson<DateTime?>(json['nextAttemptAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -630,6 +669,7 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
       'state': serializer.toJson<String>(state),
       'attempts': serializer.toJson<int>(attempts),
       'lastError': serializer.toJson<String?>(lastError),
+      'nextAttemptAt': serializer.toJson<DateTime?>(nextAttemptAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -644,6 +684,7 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
     String? state,
     int? attempts,
     Value<String?> lastError = const Value.absent(),
+    Value<DateTime?> nextAttemptAt = const Value.absent(),
     DateTime? createdAt,
   }) => PendingAction(
     id: id ?? this.id,
@@ -655,6 +696,9 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
     state: state ?? this.state,
     attempts: attempts ?? this.attempts,
     lastError: lastError.present ? lastError.value : this.lastError,
+    nextAttemptAt: nextAttemptAt.present
+        ? nextAttemptAt.value
+        : this.nextAttemptAt,
     createdAt: createdAt ?? this.createdAt,
   );
   PendingAction copyWithCompanion(PendingActionsCompanion data) {
@@ -668,6 +712,9 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
       state: data.state.present ? data.state.value : this.state,
       attempts: data.attempts.present ? data.attempts.value : this.attempts,
       lastError: data.lastError.present ? data.lastError.value : this.lastError,
+      nextAttemptAt: data.nextAttemptAt.present
+          ? data.nextAttemptAt.value
+          : this.nextAttemptAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -684,6 +731,7 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
           ..write('state: $state, ')
           ..write('attempts: $attempts, ')
           ..write('lastError: $lastError, ')
+          ..write('nextAttemptAt: $nextAttemptAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -700,6 +748,7 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
     state,
     attempts,
     lastError,
+    nextAttemptAt,
     createdAt,
   );
   @override
@@ -715,6 +764,7 @@ class PendingAction extends DataClass implements Insertable<PendingAction> {
           other.state == this.state &&
           other.attempts == this.attempts &&
           other.lastError == this.lastError &&
+          other.nextAttemptAt == this.nextAttemptAt &&
           other.createdAt == this.createdAt);
 }
 
@@ -728,6 +778,7 @@ class PendingActionsCompanion extends UpdateCompanion<PendingAction> {
   final Value<String> state;
   final Value<int> attempts;
   final Value<String?> lastError;
+  final Value<DateTime?> nextAttemptAt;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const PendingActionsCompanion({
@@ -740,6 +791,7 @@ class PendingActionsCompanion extends UpdateCompanion<PendingAction> {
     this.state = const Value.absent(),
     this.attempts = const Value.absent(),
     this.lastError = const Value.absent(),
+    this.nextAttemptAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -753,6 +805,7 @@ class PendingActionsCompanion extends UpdateCompanion<PendingAction> {
     this.state = const Value.absent(),
     this.attempts = const Value.absent(),
     this.lastError = const Value.absent(),
+    this.nextAttemptAt = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -770,6 +823,7 @@ class PendingActionsCompanion extends UpdateCompanion<PendingAction> {
     Expression<String>? state,
     Expression<int>? attempts,
     Expression<String>? lastError,
+    Expression<DateTime>? nextAttemptAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -783,6 +837,7 @@ class PendingActionsCompanion extends UpdateCompanion<PendingAction> {
       if (state != null) 'state': state,
       if (attempts != null) 'attempts': attempts,
       if (lastError != null) 'last_error': lastError,
+      if (nextAttemptAt != null) 'next_attempt_at': nextAttemptAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -798,6 +853,7 @@ class PendingActionsCompanion extends UpdateCompanion<PendingAction> {
     Value<String>? state,
     Value<int>? attempts,
     Value<String?>? lastError,
+    Value<DateTime?>? nextAttemptAt,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -811,6 +867,7 @@ class PendingActionsCompanion extends UpdateCompanion<PendingAction> {
       state: state ?? this.state,
       attempts: attempts ?? this.attempts,
       lastError: lastError ?? this.lastError,
+      nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -846,6 +903,9 @@ class PendingActionsCompanion extends UpdateCompanion<PendingAction> {
     if (lastError.present) {
       map['last_error'] = Variable<String>(lastError.value);
     }
+    if (nextAttemptAt.present) {
+      map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -867,6 +927,7 @@ class PendingActionsCompanion extends UpdateCompanion<PendingAction> {
           ..write('state: $state, ')
           ..write('attempts: $attempts, ')
           ..write('lastError: $lastError, ')
+          ..write('nextAttemptAt: $nextAttemptAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1073,6 +1134,7 @@ typedef $$PendingActionsTableCreateCompanionBuilder =
       Value<String> state,
       Value<int> attempts,
       Value<String?> lastError,
+      Value<DateTime?> nextAttemptAt,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -1087,6 +1149,7 @@ typedef $$PendingActionsTableUpdateCompanionBuilder =
       Value<String> state,
       Value<int> attempts,
       Value<String?> lastError,
+      Value<DateTime?> nextAttemptAt,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -1142,6 +1205,11 @@ class $$PendingActionsTableFilterComposer
 
   ColumnFilters<String> get lastError => $composableBuilder(
     column: $table.lastError,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1205,6 +1273,11 @@ class $$PendingActionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -1246,6 +1319,11 @@ class $$PendingActionsTableAnnotationComposer
 
   GeneratedColumn<String> get lastError =>
       $composableBuilder(column: $table.lastError, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -1297,6 +1375,7 @@ class $$PendingActionsTableTableManager
                 Value<String> state = const Value.absent(),
                 Value<int> attempts = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),
+                Value<DateTime?> nextAttemptAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PendingActionsCompanion(
@@ -1309,6 +1388,7 @@ class $$PendingActionsTableTableManager
                 state: state,
                 attempts: attempts,
                 lastError: lastError,
+                nextAttemptAt: nextAttemptAt,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -1323,6 +1403,7 @@ class $$PendingActionsTableTableManager
                 Value<String> state = const Value.absent(),
                 Value<int> attempts = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),
+                Value<DateTime?> nextAttemptAt = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => PendingActionsCompanion.insert(
@@ -1335,6 +1416,7 @@ class $$PendingActionsTableTableManager
                 state: state,
                 attempts: attempts,
                 lastError: lastError,
+                nextAttemptAt: nextAttemptAt,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

@@ -55,8 +55,10 @@ class RouteRepository {
   ];
 
   Future<Cached<List<DeliveryStop>>?> cachedRoute(DateTime day) async {
-    final json = await _db.readJson(routeKey(day));
-    return json == null ? null : Cached(_decodeRoute(json), fromCache: true);
+    final c = await _db.readCached(routeKey(day));
+    return c == null
+        ? null
+        : Cached(_decodeRoute(c.json), fromCache: true, fetchedAt: c.fetchedAt);
   }
 
   /// `delivery_route` for [day] (the backend scopes it to the rider's shops).
@@ -71,9 +73,14 @@ class RouteRepository {
       return Cached(_decodeRoute(json), fromCache: false, fetchedAt: now);
     } on Object catch (e) {
       final error = DrsApiError.from(e);
-      final cached = await _db.readJson(routeKey(day));
+      final cached = await _db.readCached(routeKey(day));
       if (cached == null) throw error;
-      return Cached(_decodeRoute(cached), fromCache: true, error: error);
+      return Cached(
+        _decodeRoute(cached.json),
+        fromCache: true,
+        fetchedAt: cached.fetchedAt,
+        error: error,
+      );
     }
   }
 

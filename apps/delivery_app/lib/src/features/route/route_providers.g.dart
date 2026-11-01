@@ -94,7 +94,7 @@ final class RouteRepositoryProvider
   }
 }
 
-String _$routeRepositoryHash() => r'ded5d09af4db72432d63beb408eea4fbb5ebb513';
+String _$routeRepositoryHash() => r'b247e968f034de219550479c564a2d877e6e3a56';
 
 /// Cache first (instant, offline), then the network.
 
@@ -260,4 +260,4 @@ final class RouteViewProvider
   }
 }
 
-String _$routeViewHash() => r'db36e456991f94f05739b32a08b8ff8d7cc9c4b9';
+String _$routeViewHash() => r'df9597eab7f8abb19e8985cb4634335ce72a2266';

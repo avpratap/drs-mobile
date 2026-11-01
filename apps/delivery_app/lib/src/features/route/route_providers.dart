@@ -27,6 +27,7 @@ DateTime routeDay(Ref ref) => todayIst();
 RouteRepository routeRepository(Ref ref) => RouteRepository(
   api: ref.watch(drsApiProvider),
   db: ref.watch(deliveryDatabaseProvider),
+  clock: ref.watch(clockProvider),
 );
 
 /// Cache first (instant, offline), then the network.
@@ -58,9 +59,13 @@ class StopView {
   bool get waitingToSync => pending?.state == 'queued';
   bool get needsAttention => pending?.state == 'failed';
 
+  /// The office changed this stop; the local update was not applied.
+  bool get hasConflict => pending?.state == 'conflict';
+
   DeliveryStatus get status {
     final p = pending;
-    if (p == null) return stop.status;
+    // A conflicted action was not applied: show what the server says.
+    if (p == null || hasConflict) return stop.status;
     return p.kind == 'fail' ? DeliveryStatus.failed : DeliveryStatus.delivered;
   }
 
@@ -69,10 +74,18 @@ class StopView {
 }
 
 class RouteView {
-  const RouteView({required this.stops, required this.fromCache, this.error});
+  const RouteView({
+    required this.stops,
+    required this.fromCache,
+    this.fetchedAt,
+    this.error,
+  });
 
   final List<StopView> stops;
   final bool fromCache;
+
+  /// When this route was last fetched from the server.
+  final DateTime? fetchedAt;
   final DrsApiError? error;
 
   List<DeliveryStop> get effectiveStops => [
@@ -91,6 +104,7 @@ Future<RouteView> routeView(Ref ref) async {
   return RouteView(
     stops: [for (final s in route.value) StopView(s, byOrder[s.orderId])],
     fromCache: route.fromCache,
+    fetchedAt: route.fetchedAt,
     error: route.error,
   );
 }

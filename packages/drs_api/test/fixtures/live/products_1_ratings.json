@@ -1,0 +1,62 @@
+{
+  "product_id": 1,
+  "count": 4,
+  "average": 4.0,
+  "distribution": {
+    "1": 0,
+    "2": 0,
+    "3": 1,
+    "4": 2,
+    "5": 1
+  },
+  "ratings": [
+    {
+      "id": 4,
+      "user_id": null,
+      "mine": false,
+      "product_id": 1,
+      "stars": 4,
+      "comment": "Good taste and packaging. Happy with it.",
+      "status": "approved",
+      "verified_purchase": false,
+      "helpful_count": 0,
+      "admin_reply": null
+    },
+    {
+      "id": 3,
+      "user_id": null,
+      "mine": false,
+      "product_id": 1,
+      "stars": 3,
+      "comment": "Okay overall. Delivery timing could be better.",
+      "status": "approved",
+      "verified_purchase": false,
+      "helpful_count": 0,
+      "admin_reply": null
+    },
+    {
+      "id": 2,
+      "user_id": null,
+      "mine": false,
+      "product_id": 1,
+      "stars": 5,
+      "comment": "Fresh every single morning. My family loves it.",
+      "status": "approved",
+      "verified_purchase": false,
+      "helpful_count": 0,
+      "admin_reply": null
+    },
+    {
+      "id": 1,
+      "user_id": null,
+      "mine": false,
+      "product_id": 1,
+      "stars": 4,
+      "comment": "Good taste and packaging. Happy with it.",
+      "status": "approved",
+      "verified_purchase": false,
+      "helpful_count": 0,
+      "admin_reply": null
+    }
+  ]
+}

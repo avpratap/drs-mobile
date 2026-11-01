@@ -104,7 +104,7 @@ final class SyncEngineProvider
   }
 }
 
-String _$syncEngineHash() => r'83c703c2bf2a24141eadb2dd8508a60801f0beba';
+String _$syncEngineHash() => r'07413331fa37c15a0735de35b03055e5882cd22f';
 
 /// Records rider actions locally (instant, works offline) and syncs them.
 
@@ -142,7 +142,7 @@ final class SyncControllerProvider
   }
 }
 
-String _$syncControllerHash() => r'b56965878cf3dbd6cc07e8657e10ee4b27f42e98';
+String _$syncControllerHash() => r'4431850650a82fe51d3c57f2ff79e632eefde4fe';
 
 /// Records rider actions locally (instant, works offline) and syncs them.
 

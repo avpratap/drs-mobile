@@ -49,13 +49,13 @@ class NotificationPrefsScreen extends ConsumerWidget {
           switch ((profile, consents)) {
             (AsyncValue(value: final p?), AsyncValue(value: final c?)) =>
               _Categories(profile: p, consents: c),
-            (AsyncError(), _) || (_, AsyncError()) => DrsEmptyState.error(
+            (AsyncError(:final error), _) ||
+            (_, AsyncError(:final error)) => errorState(
+              error,
               title: "Couldn't load your preferences",
-              onAction: () {
-                ref
-                  ..invalidate(profileProvider)
-                  ..invalidate(consentsProvider);
-              },
+              onRetry: () => ref
+                ..invalidate(profileProvider)
+                ..invalidate(consentsProvider),
             ),
             _ => const Padding(
               padding: EdgeInsets.all(DrsSpacing.lg),
@@ -119,7 +119,7 @@ class _Categories extends HookConsumerWidget {
     return Card(
       child: Column(
         children: [
-          SwitchListTile(
+          DrsSwitchTile(
             key: const ValueKey('pref-service'),
             secondary: const Icon(Icons.local_shipping_outlined),
             title: const Text('Orders, deliveries & account'),
@@ -137,7 +137,7 @@ class _Categories extends HookConsumerWidget {
                   ),
           ),
           const Divider(height: 1),
-          SwitchListTile(
+          DrsSwitchTile(
             key: const ValueKey('pref-offers'),
             secondary: const Icon(Icons.local_offer_outlined),
             title: const Text('Offers & promotions'),

@@ -77,7 +77,10 @@ void main() {
     h.server.offline = true;
     await goTo(t, Routes.account);
     await goTo(t, Routes.orders);
-    expect(find.text('Offline — showing saved orders.'), findsOneWidget);
+    expect(
+      find.text("You're offline — saved information is shown where available."),
+      findsOneWidget,
+    );
     expect(find.text('DRS-001'), findsOneWidget);
 
     h.server.offline = false;
@@ -92,5 +95,27 @@ void main() {
     await t.tap(find.text('Sign out').last);
     await t.pumpAndSettle();
     expect(await h.db.readJson('orders'), isNull);
+  });
+
+  testWidgets('server error with saved orders: per-screen "couldn\'t '
+      'refresh" banner, no offline strip', (t) async {
+    setDevice(t, const Size(412, 915));
+    final h = Harness();
+    h.server.orders.add(_order(1));
+    await h.start(t);
+    await goTo(t, Routes.orders);
+
+    h.server.failAllWith = 503;
+    await goTo(t, Routes.account);
+    await goTo(t, Routes.orders);
+    expect(
+      find.text("Couldn't refresh — showing saved orders."),
+      findsOneWidget,
+    );
+    expect(
+      find.text("You're offline — saved information is shown where available."),
+      findsNothing,
+    );
+    expect(find.text('DRS-001'), findsOneWidget);
   });
 }

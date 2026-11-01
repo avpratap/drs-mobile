@@ -155,6 +155,7 @@ class AddressFormScreen extends HookConsumerWidget {
                 decoration: dec('PIN code'),
                 keyboardType: TextInputType.number,
                 autofillHints: const [AutofillHints.postalCode],
+                textInputAction: TextInputAction.next,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(6),
@@ -181,6 +182,7 @@ class AddressFormScreen extends HookConsumerWidget {
                 decoration: dec('Mobile', hint: '98765 43210'),
                 keyboardType: TextInputType.phone,
                 autofillHints: const [AutofillHints.telephoneNumberNational],
+                textInputAction: TextInputAction.next,
                 validator: (v) =>
                     (v == null || v.trim().isEmpty || IndianPhone.isValid(v))
                     ? null
@@ -190,9 +192,11 @@ class AddressFormScreen extends HookConsumerWidget {
               TextFormField(
                 controller: label,
                 decoration: dec('Save as', hint: 'Home, Office…'),
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => save(),
               ),
               if (a == null || !a.isDefault)
-                SwitchListTile.adaptive(
+                DrsSwitchTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Use as default address'),
                   value: makeDefault.value,

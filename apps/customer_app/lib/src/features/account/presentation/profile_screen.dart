@@ -145,6 +145,8 @@ class _ProfileForm extends HookConsumerWidget {
                   : 'Used for invoices and receipts.',
             ),
             keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => save(),
             autofillHints: const [AutofillHints.email],
             validator: (v) =>
                 (v == null || v.trim().isEmpty || isPlausibleEmail(v))

@@ -26,9 +26,12 @@ class OrdersScreen extends ConsumerWidget {
     return DrsScaffold(
       appBar: const DrsAppBar(title: 'Your orders'),
       maxContentWidth: DrsSpacing.maxWideContentWidth,
-      banner: orders.value?.fromCache ?? false
+      // Offline is shown app-wide; here only "server had a problem".
+      banner:
+          (orders.value?.fromCache ?? false) &&
+              !(orders.value?.error?.isConnectivity ?? true)
           ? DrsOfflineBanner(
-              message: 'Offline — showing saved orders.',
+              message: "Couldn't refresh — showing saved orders.",
               onRetry: refresh,
             )
           : null,

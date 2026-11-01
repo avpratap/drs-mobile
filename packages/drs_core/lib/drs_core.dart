@@ -20,5 +20,6 @@ export 'src/models/wallet.dart';
 export 'src/notifications/device_token_registrar.dart';
 export 'src/notifications/push_payload.dart';
 export 'src/utils/indian_phone.dart';
+export 'src/utils/media.dart';
 export 'src/utils/pii.dart';
 export 'src/utils/quantity.dart';

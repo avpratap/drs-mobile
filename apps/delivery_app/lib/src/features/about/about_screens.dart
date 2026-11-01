@@ -27,10 +27,10 @@ class AboutScreen extends ConsumerWidget {
           tagline: 'Rider app',
           onPrivacyNotice: () => context.push(Routes.privacyNotice),
         ),
-        AsyncValue(:final error?) => DrsEmptyState.error(
+        AsyncValue(:final error?) => errorState(
+          error,
           title: "Couldn't read app details",
-          message: errorMessage(error),
-          onAction: () => ref.invalidate(appInfoProvider),
+          onRetry: () => ref.invalidate(appInfoProvider),
         ),
         _ => const DrsLoading(),
       },

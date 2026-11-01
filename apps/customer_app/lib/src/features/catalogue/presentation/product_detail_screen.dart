@@ -90,14 +90,11 @@ class _Hero extends StatelessWidget {
         borderRadius: BorderRadius.circular(DrsRadius.lg),
         child: ColoredBox(
           color: tint,
-          child: product.imageUrl == null || product.imageUrl!.isEmpty
-              ? Center(child: icon)
-              : Image.network(
-                  product.imageUrl!,
-                  fit: BoxFit.cover,
-                  semanticLabel: product.name,
-                  errorBuilder: (_, _, _) => Center(child: icon),
-                ),
+          child: DrsNetworkImage(
+            url: product.imageUrl,
+            semanticLabel: product.name,
+            placeholder: Center(child: icon),
+          ),
         ),
       ),
     );
@@ -120,7 +117,7 @@ class _Info extends StatelessWidget {
         if (p.category != null) ...[
           const SizedBox(height: DrsSpacing.xxs),
           Text(
-            p.category!,
+            categoryLabel(p.category!),
             style: theme.textTheme.labelLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

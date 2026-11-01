@@ -11,6 +11,7 @@ import '../../routes.dart';
 import '../common.dart';
 import '../map/stops_map.dart';
 import '../stop/stop_widgets.dart';
+import '../sync/retry_policy.dart';
 import '../sync/sync_controller.dart';
 import 'route_providers.dart';
 
@@ -51,13 +52,19 @@ class TodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(routeViewProvider);
+    if (view.hasValue) DrsStartupTrace.mark('content_shown');
     final pending = ref.watch(pendingActionsProvider).value ?? const [];
     final sync = ref.watch(syncControllerProvider);
     final day = ref.watch(routeDayProvider);
 
     final waiting = pending.where((p) => p.state == 'queued').length;
     final attention = pending.where((p) => p.state == 'failed').length;
+    final conflicts = pending.where((p) => p.state == 'conflict').length;
+    final now = ref.watch(clockProvider)();
+    final fetchedAt = view.value?.fetchedAt;
 
+    // Most important first: the rider must act > office changes > unsynced
+    // work > the route itself may be out of date.
     Widget? banner;
     if (attention > 0) {
       banner = _Strip(
@@ -65,24 +72,48 @@ class TodayScreen extends ConsumerWidget {
         tone: DrsTone.negative,
         text: '$attention update(s) need your attention.',
       );
+    } else if (conflicts > 0) {
+      banner = _Strip(
+        icon: Icons.sync_problem,
+        tone: DrsTone.negative,
+        text: conflicts == 1
+            ? 'The office changed a stop you updated — open it to review.'
+            : 'The office changed $conflicts stops you updated — open them '
+                  'to review.',
+      );
     } else if (waiting > 0) {
       banner = _Strip(
         icon: Icons.cloud_upload_outlined,
         tone: DrsTone.warning,
         text: sync.running
             ? 'Syncing $waiting update(s)…'
-            : '$waiting update(s) waiting to sync${sync.offline ? ' — offline' : ''}.',
+            : sync.serverTrouble
+            ? '$waiting update(s) waiting — the server is busy; retrying '
+                  'automatically.'
+            : '$waiting update(s) waiting to sync'
+                  '${sync.offline ? ' — offline' : ''}.',
         action: sync.running
             ? null
             : TextButton(
-                onPressed: () =>
-                    ref.read(syncControllerProvider.notifier).syncNow(),
+                onPressed: () => ref
+                    .read(syncControllerProvider.notifier)
+                    .syncNow(force: true),
                 child: const Text('Sync now'),
               ),
       );
     } else if (view.value?.fromCache ?? false) {
       banner = DrsOfflineBanner(
-        message: "You're offline — showing today's saved route.",
+        message: fetchedAt == null
+            ? "You're offline — showing today's saved route."
+            : 'Offline — showing the route saved at ${clockTime(fetchedAt)} '
+                  '(${ago(fetchedAt, now)}).',
+        onRetry: () => refresh(ref),
+      );
+    } else if (isStale(fetchedAt, now) && fetchedAt != null) {
+      banner = DrsOfflineBanner(
+        message:
+            'Route last updated ${clockTime(fetchedAt)} — it may have '
+            'changed.',
         onRetry: () => refresh(ref),
       );
     }
@@ -163,10 +194,10 @@ class TodayScreen extends ConsumerWidget {
             );
           },
         ),
-        AsyncValue(:final error?) => DrsEmptyState.error(
+        AsyncValue(:final error?) => errorState(
+          error,
           title: "Couldn't load today's route",
-          message: errorMessage(error),
-          onAction: () => refresh(ref),
+          onRetry: () => refresh(ref),
         ),
         _ => const DrsLoading(message: "Loading today's route…"),
       },
@@ -241,64 +272,81 @@ class _RouteList extends ConsumerWidget {
     final groups = ShopGroup.group(view.effectiveStops);
     final byOrder = {for (final v in view.stops) v.stop.orderId: v};
 
-    return RefreshIndicator.adaptive(
-      onRefresh: () => TodayScreen.refresh(ref),
-      child: ListView(
-        padding: const EdgeInsets.all(DrsSpacing.md),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(DrsSpacing.md),
-              child: Semantics(
-                container: true,
-                label:
-                    '${summary.done} of ${summary.total} delivered, '
-                    '${summary.failed} failed, ${summary.remaining} remaining',
-                excludeSemantics: true,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1]} '
-                      '${day.day}/${day.month}',
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: DrsSpacing.xs),
-                    Text(
-                      '${summary.done} of ${summary.total} delivered',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: DrsSpacing.xs),
-                    LinearProgressIndicator(
-                      value: summary.total == 0
-                          ? 0
-                          : (summary.done + summary.failed) / summary.total,
-                      minHeight: 6,
-                      borderRadius: BorderRadius.circular(DrsRadius.pill),
-                    ),
-                    const SizedBox(height: DrsSpacing.xs),
-                    Text(
-                      '${summary.remaining} remaining · ${summary.failed} failed',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
+    // Header widgets, then one lazily built card per shop: long routes only
+    // build what's on screen (ListView.builder), keeping scrolling smooth.
+    final header = <Widget>[
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(DrsSpacing.md),
+          child: Semantics(
+            container: true,
+            label:
+                '${summary.done} of ${summary.total} delivered, '
+                '${summary.failed} failed, ${summary.remaining} remaining'
+                '${view.fetchedAt == null ? '' : ', updated ${clockTime(view.fetchedAt!)}'}',
+            excludeSemantics: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1]} '
+                  '${day.day}/${day.month}',
+                  style: theme.textTheme.labelLarge,
                 ),
-              ),
+                const SizedBox(height: DrsSpacing.xs),
+                Text(
+                  '${summary.done} of ${summary.total} delivered',
+                  style: theme.textTheme.titleLarge,
+                ),
+                const SizedBox(height: DrsSpacing.xs),
+                LinearProgressIndicator(
+                  value: summary.total == 0
+                      ? 0
+                      : (summary.done + summary.failed) / summary.total,
+                  minHeight: 6,
+                  borderRadius: BorderRadius.circular(DrsRadius.pill),
+                ),
+                const SizedBox(height: DrsSpacing.xs),
+                Text(
+                  '${summary.remaining} remaining · ${summary.failed} failed',
+                  style: theme.textTheme.bodySmall,
+                ),
+                if (view.fetchedAt case final at?)
+                  Text(
+                    'Updated ${clockTime(at)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: DrsSpacing.md),
-          const NotificationsOptInCard(),
-          if (groups.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: DrsSpacing.xl),
-              child: DrsEmptyState(
-                icon: Icons.local_shipping_outlined,
-                title: 'No deliveries for today',
-                message: "Your route will appear here once it's assigned. Pull down to refresh.",
-              ),
-            ),
-          for (final g in groups) ...[
-            DrsSection(
+        ),
+      ),
+      const SizedBox(height: DrsSpacing.md),
+      const NotificationsOptInCard(),
+      if (groups.isEmpty)
+        const Padding(
+          padding: EdgeInsets.only(top: DrsSpacing.xl),
+          child: DrsEmptyState(
+            icon: Icons.local_shipping_outlined,
+            title: 'No deliveries for today',
+            message: "Your route will appear here once it's assigned. Pull down to refresh.",
+          ),
+        ),
+    ];
+
+    return RefreshIndicator.adaptive(
+      onRefresh: () => TodayScreen.refresh(ref),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(DrsSpacing.md),
+        itemCount: header.length + groups.length,
+        itemBuilder: (context, i) {
+          if (i < header.length) return header[i];
+          final g = groups[i - header.length];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: DrsSpacing.sm),
+            child: DrsSection(
               title: g.name,
               trailing: DrsStatusChip(
                 label: '${g.doneCount}/${g.stops.length} done',
@@ -315,9 +363,8 @@ class _RouteList extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: DrsSpacing.sm),
-          ],
-        ],
+          );
+        },
       ),
     );
   }

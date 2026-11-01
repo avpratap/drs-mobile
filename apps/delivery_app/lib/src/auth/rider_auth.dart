@@ -27,15 +27,24 @@ class RiderAuth extends _$RiderAuth {
     ref.onDispose(sub.cancel);
 
     if (await _tokens.read() == null) return null;
+    // Fast, offline-first cold start: a stored rider session opens today's
+    // route at once (from the device cache when offline). The account is
+    // confirmed in the background; a revoked or non-rider session signs out.
+    unawaited(Future<void>(_confirmRiderAfterStart));
+    return const Account(userId: 0, phone: '', role: AccountRole.delivery);
+  }
+
+  Future<void> _confirmRiderAfterStart() async {
     try {
-      return await _loadRider();
+      final rider = await _loadRider();
+      if (ref.mounted && state.value != null) state = AsyncData(rider);
     } on DrsApiError catch (e) {
       if (e.kind == DrsApiErrorKind.unauthorized ||
           e.kind == DrsApiErrorKind.forbidden) {
         await _tokens.clear();
-        return null;
+        if (ref.mounted) state = const AsyncData(null);
       }
-      rethrow;
+      // Offline / server trouble: keep working from the device.
     }
   }
 

@@ -15,11 +15,16 @@ class Call {
   String get key => '$method $path';
 }
 
-ResponseBody _json(int status, Object body) => ResponseBody.fromString(
+ResponseBody _json(
+  int status,
+  Object body, {
+  Map<String, List<String>> headers = const {},
+}) => ResponseBody.fromString(
   jsonEncode(body),
   status,
   headers: {
     Headers.contentTypeHeader: [Headers.jsonContentType],
+    ...headers,
   },
 );
 
@@ -36,6 +41,12 @@ class FakeDeliveryServer implements HttpClientAdapter {
   /// Apply the next deliver/fail, then drop the response (lost connection).
   bool loseNextWriteResponse = false;
 
+  /// Deliver/fail answer with this status (e.g. 503 / 429) without applying.
+  int? failWritesWith;
+
+  /// Sent as `Retry-After` with [failWritesWith].
+  String? retryAfter;
+
   final calls = <Call>[];
   final _replay = <String, Object>{};
   int uploads = 0;
@@ -44,7 +55,7 @@ class FakeDeliveryServer implements HttpClientAdapter {
   final deviceTokens = <String, String>{};
   int writesApplied = 0;
 
-  static Map<String, Object?> _order(
+  static Map<String, Object?> order(
     int id,
     int shop,
     String shopName,
@@ -85,7 +96,7 @@ class FakeDeliveryServer implements HttpClientAdapter {
   };
 
   final orders = <Map<String, Object?>>[
-    _order(
+    order(
       11,
       1,
       'Shyam Dairy, Malviya Nagar',
@@ -97,7 +108,7 @@ class FakeDeliveryServer implements HttpClientAdapter {
       phone: '+919876543210',
       due: 94,
     ),
-    _order(
+    order(
       12,
       1,
       'Shyam Dairy, Malviya Nagar',
@@ -108,7 +119,7 @@ class FakeDeliveryServer implements HttpClientAdapter {
       contact: 'Ravi Kumar',
       phone: '+919812345678',
     ),
-    _order(
+    order(
       13,
       2,
       'Gopal Kirana, Vaishali Nagar',
@@ -136,6 +147,16 @@ class FakeDeliveryServer implements HttpClientAdapter {
     calls.add(c);
     if (offline) {
       throw DioException.connectionError(requestOptions: o, reason: 'offline');
+    }
+    final isWrite = c.path.endsWith('/deliver') || c.path.endsWith('/fail');
+    if (isWrite && failWritesWith != null) {
+      return _json(
+        failWritesWith!,
+        {'detail': 'Service unavailable'},
+        headers: {
+          if (retryAfter != null) 'retry-after': [retryAfter!],
+        },
+      );
     }
     final (status, out) = _route(c);
     if (loseNextWriteResponse &&
@@ -234,7 +255,11 @@ class FakeDeliveryServer implements HttpClientAdapter {
     final m = RegExp(r'^/api/v1/delivery/orders/(\d+)/(deliver|fail)$')
         .firstMatch(p);
     if (m != null) {
-      final o = _get(int.parse(m[1]!));
+      final id = int.parse(m[1]!);
+      if (!orders.any((o) => o['id'] == id)) {
+        return (404, {'detail': 'Delivery order not found'});
+      }
+      final o = _get(id);
       if (o['status'] != 'generated' && o['status'] != 'frozen') {
         return (
           409,

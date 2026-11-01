@@ -66,6 +66,9 @@ class Harness {
 
   final FakeDeliveryServer server;
   final bool signedIn;
+
+  /// The app's wall clock (advance it to test backoff / staleness).
+  DateTime now = DateTime(2026, 11, 1, 8);
   final DrsEnv? env;
 
   /// When set, the shared notifications service runs on this fake platform.
@@ -106,6 +109,8 @@ class Harness {
       }),
       autoSyncProvider.overrideWithValue(false),
       routeDayProvider.overrideWithValue(DateTime.utc(2026, 11, 1)),
+      // Adjustable wall clock: "updated at", staleness, retry backoff.
+      clockProvider.overrideWithValue(() => now),
       // No platform channel in tests: fixed version for About + goldens.
       appInfoProvider.overrideWith(
         (ref) async => DrsAppInfo(

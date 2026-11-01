@@ -7,6 +7,7 @@ import 'src/core/push.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  DrsStartupTrace.begin();
   registerDrsLicenses();
   runApp(
     ProviderScope(

@@ -93,10 +93,10 @@ class DeliverScreen extends HookConsumerWidget {
                   child: Column(
                     children: [
                       for (final l in s.lines)
-                        CheckboxListTile.adaptive(
+                        DrsCheckTile(
                           contentPadding: EdgeInsets.zero,
                           value: !unchecked.value.contains(l.productId),
-                          onChanged: (v) => unchecked.value = v ?? false
+                          onChanged: (v) => unchecked.value = v
                               ? ({...unchecked.value}..remove(l.productId))
                               : {...unchecked.value, l.productId},
                           title: Text(
