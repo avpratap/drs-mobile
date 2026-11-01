@@ -31,10 +31,15 @@ class PendingActions extends Table {
   TextColumn get photoPath => text().nullable()();
   TextColumn get photoRef => text().nullable()();
 
-  /// `queued` (will be retried automatically) | `failed` (needs the rider).
+  /// `queued` (retried automatically) | `failed` (the server rejected it;
+  /// needs the rider) | `conflict` (the office already changed this stop;
+  /// the rider acknowledges and sees the server's version).
   TextColumn get state => text().withDefault(const Constant('queued'))();
   IntColumn get attempts => integer().withDefault(const Constant(0))();
   TextColumn get lastError => text().nullable()();
+
+  /// Backoff: not retried automatically before this time (v2).
+  DateTimeColumn get nextAttemptAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime()();
 
   @override
@@ -52,6 +57,7 @@ class QueuedAction {
     required this.attempts,
     this.lastError,
     this.photoPath,
+    this.nextAttemptAt,
   });
 
   final String id;
@@ -60,11 +66,14 @@ class QueuedAction {
   /// `deliver` | `fail`
   final String kind;
 
-  /// `queued` | `failed`
+  /// `queued` | `failed` | `conflict`
   final String state;
   final int attempts;
   final String? lastError;
   final String? photoPath;
+
+  /// When the next automatic retry is due (null = as soon as possible).
+  final DateTime? nextAttemptAt;
 }
 
 /// DPDP: tokens are never stored here. Route/contact data and queued POD
@@ -75,7 +84,25 @@ class DeliveryDatabase extends _$DeliveryDatabase {
     : super(executor ?? driftDatabase(name: 'drs_delivery'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      // v2: per-action retry backoff. Queued actions survive the upgrade.
+      if (from < 2) {
+        await m.addColumn(pendingActions, pendingActions.nextAttemptAt);
+      }
+    },
+  );
+
+  /// Cached JSON with the time it was fetched (for "updated at" / staleness).
+  Future<({String json, DateTime fetchedAt})?> readCached(String key) async {
+    final row = await (select(
+      cachedJson,
+    )..where((t) => t.key.equals(key))).getSingleOrNull();
+    return row == null ? null : (json: row.json, fetchedAt: row.fetchedAt);
+  }
 
   Future<String?> readJson(String key) async => (await (select(
     cachedJson,
@@ -104,6 +131,7 @@ class DeliveryDatabase extends _$DeliveryDatabase {
               attempts: r.attempts,
               lastError: r.lastError,
               photoPath: r.photoPath,
+              nextAttemptAt: r.nextAttemptAt,
             ),
         ],
       );
@@ -121,21 +149,34 @@ class DeliveryDatabase extends _$DeliveryDatabase {
         PendingActionsCompanion(photoRef: Value(ref)),
       );
 
-  Future<void> recordAttempt(String id, String error, {required bool failed}) =>
-      customUpdate(
-        'UPDATE pending_actions SET attempts = attempts + 1, last_error = ?, '
-        'state = ? WHERE id = ?',
-        variables: [
-          Variable.withString(error),
-          Variable.withString(failed ? 'failed' : 'queued'),
-          Variable.withString(id),
-        ],
-        updates: {pendingActions},
-      );
+  /// Counts an attempt. [state] `queued` (with an optional backoff until
+  /// [nextAttemptAt]), `failed` or `conflict`.
+  Future<void> recordAttempt(
+    String id,
+    String error, {
+    String state = 'queued',
+    DateTime? nextAttemptAt,
+  }) => transaction(() async {
+    final row = await (select(
+      pendingActions,
+    )..where((t) => t.id.equals(id))).getSingle();
+    await (update(pendingActions)..where((t) => t.id.equals(id))).write(
+      PendingActionsCompanion(
+        attempts: Value(row.attempts + 1),
+        lastError: Value(error),
+        state: Value(state),
+        nextAttemptAt: Value(nextAttemptAt),
+      ),
+    );
+  });
 
+  /// Back in the queue, due now (rider checked it / tapped Sync now).
   Future<void> requeue(String id) =>
       (update(pendingActions)..where((t) => t.id.equals(id))).write(
-        const PendingActionsCompanion(state: Value('queued')),
+        const PendingActionsCompanion(
+          state: Value('queued'),
+          nextAttemptAt: Value(null),
+        ),
       );
 
   Future<void> remove(String id) =>

@@ -55,7 +55,7 @@ class StopDetailScreen extends ConsumerWidget {
                     StopStatusChip(view: view),
                   ],
                 ),
-                if (view.needsAttention) ...[
+                if (view.needsAttention || view.hasConflict) ...[
                   const SizedBox(height: DrsSpacing.sm),
                   _Attention(view: view),
                 ],
@@ -215,6 +215,29 @@ class _Attention extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = view.pending!;
     final c = ref.read(syncControllerProvider.notifier);
+    if (view.hasConflict) {
+      return Card(
+        color: Theme.of(context).colorScheme.errorContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(DrsSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Changed by the office',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              if (p.lastError != null) Text(p.lastError!),
+              const SizedBox(height: DrsSpacing.xs),
+              TextButton(
+                onPressed: () => c.acknowledge(p),
+                child: const Text("OK, show the office's version"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Card(
       color: Theme.of(context).colorScheme.errorContainer,
       child: Padding(

@@ -33,3 +33,18 @@ Widget errorState(
     onAction: onRetry,
   ),
 };
+
+/// "8:05 am" (device local time).
+String clockTime(DateTime t) {
+  final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
+  final m = t.minute.toString().padLeft(2, '0');
+  return '$h:$m ${t.hour < 12 ? 'am' : 'pm'}';
+}
+
+/// "just now", "12 min ago", "2 h ago".
+String ago(DateTime then, DateTime now) {
+  final d = now.difference(then);
+  if (d.inMinutes < 1) return 'just now';
+  if (d.inMinutes < 60) return '${d.inMinutes} min ago';
+  return '${d.inHours} h ago';
+}

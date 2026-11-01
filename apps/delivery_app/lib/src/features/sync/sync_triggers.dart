@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../core/providers.dart';
+import '../route/route_providers.dart';
+import 'retry_policy.dart';
 import 'sync_controller.dart';
 
 /// Syncs queued actions when connectivity returns, when the app resumes,
@@ -23,8 +25,14 @@ class _SyncTriggersState extends ConsumerState<SyncTriggers> {
   Timer? _timer;
   AppLifecycleListener? _lifecycle;
 
-  void _sync() =>
-      unawaited(ref.read(syncControllerProvider.notifier).syncNow());
+  void _sync() {
+    unawaited(ref.read(syncControllerProvider.notifier).syncNow());
+    // Keep today's route fresh while the app is open.
+    final fetchedAt = ref.read(routeViewProvider).value?.fetchedAt;
+    if (isStale(fetchedAt, ref.read(clockProvider)())) {
+      ref.invalidate(routeProvider);
+    }
+  }
 
   @override
   void initState() {

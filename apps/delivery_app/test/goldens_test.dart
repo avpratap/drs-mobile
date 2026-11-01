@@ -79,4 +79,54 @@ void main() {
       );
     },
   );
+
+  // Milestone 7: sync / freshness states.
+  deliveryTest('golden: today_offline_saved_route_iphone15', (t, h) async {
+    setDevice(
+      t,
+      const Size(393, 852),
+      insets: const EdgeInsets.only(top: 59, bottom: 34),
+    );
+    await h.start(t);
+    h
+      ..server.offline = true
+      ..now = DateTime(2026, 11, 1, 8, 35);
+    await t.fling(find.byType(Scrollable).first, const Offset(0, 400), 1000);
+    await t.pumpAndSettle();
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/today_offline_saved_route_iphone15.png'),
+    );
+  });
+
+  deliveryTest('golden: stop_conflict_pixel7', (t, h) async {
+    setDevice(
+      t,
+      const Size(412, 915),
+      insets: const EdgeInsets.only(top: 24, bottom: 24),
+    );
+    await h.start(t);
+    h.server.offline = true;
+    await goTo(t, Routes.stop(11));
+    await t.tap(find.text('Mark delivered'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Take photo'));
+    await t.pumpAndSettle();
+    await t.ensureVisible(find.text('Confirm delivery'));
+    await t.tap(find.text('Confirm delivery'));
+    await t.pumpAndSettle();
+    h.server.orders.firstWhere((o) => o['id'] == 11)['status'] = 'failed';
+    h.server.offline = false;
+    await goTo(t, Routes.today);
+    await t.tap(find.text('Sync now'));
+    await t.pumpAndSettle();
+    await goTo(t, Routes.stop(11));
+    // Let the earlier "saved" snackbar expire so the shot is deterministic.
+    await t.pump(const Duration(seconds: 6));
+    await t.pumpAndSettle();
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/stop_conflict_pixel7.png'),
+    );
+  });
 }

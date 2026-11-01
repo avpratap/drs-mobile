@@ -18,6 +18,10 @@ DrsEnv env(Ref ref) => DrsEnv.fromEnvironment(
   ios: defaultTargetPlatform == TargetPlatform.iOS,
 );
 
+/// Wall clock (pinned in tests: "updated at" / staleness / retry backoff).
+@Riverpod(keepAlive: true)
+DateTime Function() clock(Ref ref) => DateTime.now;
+
 @Riverpod(keepAlive: true)
 TokenStore tokenStore(Ref ref) => SecureTokenStore();
 

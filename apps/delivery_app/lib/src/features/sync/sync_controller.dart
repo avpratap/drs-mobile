@@ -25,15 +25,25 @@ SyncEngine syncEngine(Ref ref) => SyncEngine(
   db: ref.watch(deliveryDatabaseProvider),
   files: ref.watch(podFilesProvider),
   readPhoto: ref.watch(podPhotoReaderProvider),
+  clock: ref.watch(clockProvider),
 );
 
 class SyncStatus {
-  const SyncStatus({this.running = false, this.offline = false, this.lastRun});
+  const SyncStatus({
+    this.running = false,
+    this.offline = false,
+    this.serverTrouble = false,
+    this.lastRun,
+  });
 
   final bool running;
 
-  /// The last run stopped because the server was unreachable.
+  /// The last run stopped because there was no connection.
   final bool offline;
+
+  /// The last run stopped because the server was erroring; updates back off
+  /// and retry automatically.
+  final bool serverTrouble;
   final DateTime? lastRun;
 }
 
@@ -95,27 +105,40 @@ class SyncController extends _$SyncController {
     unawaited(syncNow());
   }
 
-  /// Runs the queue; when anything synced, re-reads the route so statuses
-  /// come from the server again.
-  Future<void> syncNow() async {
+  /// Runs the queue; when anything synced or turned into a conflict,
+  /// re-reads the route so statuses come from the server again.
+  /// [force] = the rider asked ("Sync now"): ignore backoff.
+  Future<void> syncNow({bool force = false}) async {
     if (state.running) return;
-    final before = (await _db.allPending()).length;
-    if (before == 0) return;
+    final before = await _db.allPending();
+    if (before.where((a) => a.state == 'queued').isEmpty) return;
     state = SyncStatus(running: true, lastRun: state.lastRun);
-    final outcome = await ref.read(syncEngineProvider).run();
-    final after = (await _db.allPending()).length;
+    final outcome = await ref.read(syncEngineProvider).run(force: force);
+    final after = await _db.allPending();
     if (!ref.mounted) return;
     state = SyncStatus(
       offline: outcome == SyncOutcome.offline,
-      lastRun: DateTime.now(),
+      serverTrouble: outcome == SyncOutcome.serverTrouble,
+      lastRun: ref.read(clockProvider)(),
     );
-    if (after < before) ref.invalidate(routeProvider);
+    int conflicts(List<PendingAction> l) =>
+        l.where((a) => a.state == 'conflict').length;
+    if (after.length < before.length || conflicts(after) > conflicts(before)) {
+      ref.invalidate(routeProvider);
+    }
   }
 
   /// Puts a failed action back in the queue (after the rider checked it).
   Future<void> retry(String id) async {
     await _db.requeue(id);
-    await syncNow();
+    await syncNow(force: true);
+  }
+
+  /// The rider saw that the office changed this stop: drop the local update
+  /// and show the server's version.
+  Future<void> acknowledge(QueuedAction a) async {
+    await discard(a);
+    ref.invalidate(routeProvider);
   }
 
   /// Drops a failed action (the stop becomes actionable again).

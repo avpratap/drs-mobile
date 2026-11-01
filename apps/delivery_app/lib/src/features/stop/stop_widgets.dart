@@ -22,9 +22,13 @@ class StopStatusChip extends StatelessWidget {
   Widget build(BuildContext context) => DrsStatusChip(
     label: view.needsAttention
         ? 'Needs attention'
+        : view.hasConflict
+        ? '${view.status.label} · changed by office'
         : view.waitingToSync
         ? '${view.status.label} · syncing'
         : view.status.label,
-    tone: view.needsAttention ? DrsTone.negative : statusTone(view.status),
+    tone: view.needsAttention || view.hasConflict
+        ? DrsTone.negative
+        : statusTone(view.status),
   );
 }
