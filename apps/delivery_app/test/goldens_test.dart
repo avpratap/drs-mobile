@@ -129,4 +129,26 @@ void main() {
       matchesGoldenFile('goldens/stop_conflict_pixel7.png'),
     );
   });
+
+  // Brand lockup across the device matrix.
+  for (final (name, size, insets) in const [
+    ('iphone_se', Size(320, 568), EdgeInsets.only(top: 20)),
+    ('pixel7', Size(412, 915), EdgeInsets.only(top: 24, bottom: 24)),
+    ('iphone15', Size(393, 852), EdgeInsets.only(top: 59, bottom: 34)),
+    ('ipad_landscape', Size(1194, 834), EdgeInsets.only(top: 24, bottom: 20)),
+  ]) {
+    if (name == 'iphone_se') continue; // login_iphone_se above
+    deliveryTest(
+      'golden: login_$name',
+      harness: () => Harness(signedIn: false),
+      (t, h) async {
+        setDevice(t, size, insets: insets);
+        await h.start(t);
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('goldens/login_$name.png'),
+        );
+      },
+    );
+  }
 }

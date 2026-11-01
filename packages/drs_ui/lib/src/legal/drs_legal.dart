@@ -100,7 +100,18 @@ class DrsAboutView extends StatelessWidget {
       padding: const EdgeInsets.all(DrsSpacing.md),
       children: [
         const SizedBox(height: DrsSpacing.lg),
-        Center(child: DrsLogo(size: 44, tagline: tagline)),
+        const Center(child: DrsLogo(size: 52)),
+        if (tagline case final t?) ...[
+          const SizedBox(height: DrsSpacing.xs),
+          Center(
+            child: Text(
+              t,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: scheme.primary,
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: DrsSpacing.md),
         Center(child: Text(info.appName, style: theme.textTheme.titleLarge)),
         const SizedBox(height: DrsSpacing.xxs),
@@ -135,7 +146,7 @@ class DrsAboutView extends StatelessWidget {
                   applicationVersion: info.versionLabel,
                   applicationIcon: const Padding(
                     padding: EdgeInsets.all(DrsSpacing.sm),
-                    child: DrsLogo(size: 32),
+                    child: DrsLogoMark(size: 48),
                   ),
                 ),
               ),

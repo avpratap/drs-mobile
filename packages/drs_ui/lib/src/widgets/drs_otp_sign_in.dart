@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drs_core/drs_core.dart';
 import 'package:flutter/material.dart';
 
+import '../theme/drs_breakpoints.dart';
 import '../theme/drs_spacing.dart';
 import 'drs_button.dart';
 import 'drs_inputs.dart';
@@ -19,7 +20,7 @@ class DrsOtpSignIn extends StatefulWidget {
     required this.onVerify,
     super.key,
     this.title = 'Sign in',
-    this.tagline = 'Pure dairy, delivered daily',
+    this.tagline,
     this.verifyLabel = 'Verify & continue',
     this.showDevHint = false,
     this.errorText = _defaultError,
@@ -36,7 +37,9 @@ class DrsOtpSignIn extends StatefulWidget {
   final Future<void> Function(String e164Phone, String otp) onVerify;
 
   final String title;
-  final String tagline;
+
+  /// App-specific line under the logo (e.g. "Delivery partner").
+  final String? tagline;
   final String verifyLabel;
 
   /// Only true on non-prod builds.
@@ -138,92 +141,126 @@ class _DrsOtpSignInState extends State<DrsOtpSignIn> {
       color: theme.colorScheme.onSurfaceVariant,
     );
 
+    final children = <Widget>[
+      SizedBox(height: short ? DrsSpacing.md : DrsSpacing.xxl),
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: DrsLogo(size: short ? 36 : 48),
+      ),
+      if (widget.tagline case final tagline?) ...[
+        const SizedBox(height: DrsSpacing.xs),
+        Text(
+          tagline,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+      ],
+      SizedBox(height: short ? DrsSpacing.md : DrsSpacing.xl),
+      Text(widget.title, style: theme.textTheme.headlineMedium),
+      const SizedBox(height: DrsSpacing.xs),
+      Text(
+        awaitingOtp
+            ? 'Code sent to ${Pii.maskPhone(_sentTo!)}'
+            : "We'll send a one-time code to your mobile number.",
+        style: muted,
+      ),
+      const SizedBox(height: DrsSpacing.lg),
+      if (!awaitingOtp) ...[
+        AutofillGroup(
+          child: DrsPhoneField(
+            controller: _phone,
+            autofocus: true,
+            enabled: !_busy,
+            errorText: _error,
+            onSubmitted: (_) => _send(),
+          ),
+        ),
+        const SizedBox(height: DrsSpacing.lg),
+        DrsButton(
+          label: 'Send OTP',
+          expand: true,
+          isLoading: _busy,
+          onPressed: _phone.text.length == 10 ? _send : null,
+        ),
+      ] else ...[
+        DrsOtpField(
+          controller: _otp,
+          enabled: !_busy,
+          errorText: _error,
+          onCompleted: (_) => _verify(),
+        ),
+        if (widget.showDevHint && _devOtp != null) ...[
+          const SizedBox(height: DrsSpacing.xs),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              icon: const Icon(Icons.developer_mode),
+              onPressed: _busy ? null : () => _otp.text = _devOtp!,
+              label: Text('Use dev code $_devOtp'),
+            ),
+          ),
+        ],
+        const SizedBox(height: DrsSpacing.lg),
+        DrsButton(
+          label: widget.verifyLabel,
+          expand: true,
+          isLoading: _busy,
+          onPressed: _otp.text.length == 6 ? _verify : null,
+        ),
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          children: [
+            TextButton(
+              onPressed: _busy
+                  ? null
+                  : () => setState(() {
+                      _sentTo = null;
+                      _error = null;
+                    }),
+              child: const Text('Change number'),
+            ),
+            TextButton(
+              onPressed: _secondsLeft == 0 && !_busy ? _send : null,
+              child: Text(
+                _secondsLeft == 0
+                    ? 'Resend code'
+                    : 'Resend in ${_secondsLeft}s',
+              ),
+            ),
+          ],
+        ),
+      ],
+      if (widget.footer != null) ...[
+        const SizedBox(height: DrsSpacing.md),
+        widget.footer!,
+      ],
+    ];
+
     return DrsScaffold(
       padded: true,
-      body: ListView(
-        children: [
-          SizedBox(height: short ? DrsSpacing.md : DrsSpacing.xxl),
-          DrsLogo(size: short ? 32 : 44, tagline: widget.tagline),
-          SizedBox(height: short ? DrsSpacing.md : DrsSpacing.xl),
-          Text(widget.title, style: theme.textTheme.headlineMedium),
-          const SizedBox(height: DrsSpacing.xs),
-          Text(
-            awaitingOtp
-                ? 'Code sent to ${Pii.maskPhone(_sentTo!)}'
-                : "We'll send a one-time code to your mobile number.",
-            style: muted,
-          ),
-          const SizedBox(height: DrsSpacing.lg),
-          if (!awaitingOtp) ...[
-            AutofillGroup(
-              child: DrsPhoneField(
-                controller: _phone,
-                autofocus: true,
-                enabled: !_busy,
-                errorText: _error,
-                onSubmitted: (_) => _send(),
-              ),
-            ),
-            const SizedBox(height: DrsSpacing.lg),
-            DrsButton(
-              label: 'Send OTP',
-              expand: true,
-              isLoading: _busy,
-              onPressed: _phone.text.length == 10 ? _send : null,
-            ),
-          ] else ...[
-            DrsOtpField(
-              controller: _otp,
-              enabled: !_busy,
-              errorText: _error,
-              onCompleted: (_) => _verify(),
-            ),
-            if (widget.showDevHint && _devOtp != null) ...[
-              const SizedBox(height: DrsSpacing.xs),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: TextButton.icon(
-                  icon: const Icon(Icons.developer_mode),
-                  onPressed: _busy ? null : () => _otp.text = _devOtp!,
-                  label: Text('Use dev code $_devOtp'),
+      body: LayoutBuilder(
+        builder: (context, c) {
+          // Phones: a simple scrolling column from the top.
+          if (DrsWindowSize.of(context).isCompact) {
+            return ListView(children: children);
+          }
+          // Tablets / large screens: logo + form centred as one block in
+          // the (already width-capped) content column.
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: c.maxHeight),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  // The phone layout's top spacer would push the block down.
+                  children: children.skip(1).toList(),
                 ),
               ),
-            ],
-            const SizedBox(height: DrsSpacing.lg),
-            DrsButton(
-              label: widget.verifyLabel,
-              expand: true,
-              isLoading: _busy,
-              onPressed: _otp.text.length == 6 ? _verify : null,
             ),
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: _busy
-                      ? null
-                      : () => setState(() {
-                          _sentTo = null;
-                          _error = null;
-                        }),
-                  child: const Text('Change number'),
-                ),
-                TextButton(
-                  onPressed: _secondsLeft == 0 && !_busy ? _send : null,
-                  child: Text(
-                    _secondsLeft == 0
-                        ? 'Resend code'
-                        : 'Resend in ${_secondsLeft}s',
-                  ),
-                ),
-              ],
-            ),
-          ],
-          if (widget.footer != null) ...[
-            const SizedBox(height: DrsSpacing.md),
-            widget.footer!,
-          ],
-        ],
+          );
+        },
       ),
     );
   }
