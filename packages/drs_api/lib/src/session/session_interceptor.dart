@@ -87,9 +87,19 @@ class DrsSessionInterceptor extends QueuedInterceptor {
           ),
         );
         access = pair.accessToken;
+      } on DioException catch (e) {
+        // Only a genuine auth rejection (the refresh token itself is invalid/revoked)
+        // ends the session. A dropped connection or a 5xx during refresh must NOT sign
+        // the user out — that would break offline-first; surface the original 401 and
+        // let the caller retry later with the still-valid refresh token.
+        final status = e.response?.statusCode;
+        if (status == 401 || status == 403) {
+          await tokenStore.clear();
+          onSessionExpired?.call();
+        }
+        return handler.next(err);
       } on Object {
-        await tokenStore.clear();
-        onSessionExpired?.call();
+        // Unexpected non-Dio failure during refresh: don't nuke a possibly-good session.
         return handler.next(err);
       }
     }
@@ -98,6 +108,13 @@ class DrsSessionInterceptor extends QueuedInterceptor {
       req.extra[_retriedKey] = true;
       req.extra[_usedTokenKey] = access;
       req.headers['Authorization'] = 'Bearer $access';
+      // A multipart body's file streams are single-read; the original was already consumed
+      // sending the first (401) attempt, so re-fetching it as-is throws "already read".
+      // Clone the FormData (MultipartFile.fromFile is re-readable) so the retry re-streams
+      // the POD photo / image upload instead of spuriously failing after a token refresh.
+      if (req.data is FormData) {
+        req.data = (req.data as FormData).clone();
+      }
       final retried = await dio.fetch<Object?>(req);
       return handler.resolve(retried);
     } on DioException catch (e) {
