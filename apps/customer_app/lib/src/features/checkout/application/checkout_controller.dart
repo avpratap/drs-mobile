@@ -82,11 +82,12 @@ enum TestPaymentOutcome { success, failure, pending }
 class CheckoutController extends _$CheckoutController {
   static const _uuid = Uuid();
 
-  /// Idempotency keys: one per (address, cart snapshot) for placing the
-  /// order, one per order for opening its payment. Retries reuse them, so a
-  /// lost response is replayed by the server instead of duplicated.
-  final _orderKeys = <String, String>{};
-  final _paymentKeys = <int, String>{};
+  /// Crash-durable idempotency keys: one per (address, cart snapshot) for placing the order,
+  /// one per order for opening its payment. They are PERSISTED (CachedJson) so a retry after
+  /// the process is killed between request and response REPLAYS on the server instead of
+  /// creating a duplicate order/payment; a deliberate re-order of the same cart after
+  /// [_idemTtl] gets a fresh key. (In-memory maps lost the key on restart → double order.)
+  static const _idemTtl = Duration(minutes: 30);
 
   @override
   CheckoutState build() => const CheckoutIdle();
@@ -97,7 +98,15 @@ class CheckoutController extends _$CheckoutController {
     final fingerprint =
         '${address.id}|${cart.id}|${cart.subtotal.paise}|'
         '${cart.lines.map((l) => '${l.productId}:${l.qty}').join(',')}';
-    final key = _orderKeys.putIfAbsent(fingerprint, _uuid.v4);
+    final key = await ref
+        .read(appDatabaseProvider)
+        .idempotencyKey(
+          'order',
+          fingerprint,
+          _idemTtl,
+          _uuid.v4,
+          clock: ref.read(clockProvider),
+        );
     state = const CheckoutBusy('Placing your order…');
     final Order order;
     try {
@@ -120,7 +129,15 @@ class CheckoutController extends _$CheckoutController {
     try {
       intent = await _repo.createPayment(
         orderId: order.id,
-        idempotencyKey: _paymentKeys.putIfAbsent(order.id, _uuid.v4),
+        idempotencyKey: await ref
+            .read(appDatabaseProvider)
+            .idempotencyKey(
+              'payment',
+              '${order.id}',
+              _idemTtl,
+              _uuid.v4,
+              clock: ref.read(clockProvider),
+            ),
       );
     } on DrsApiError catch (e) {
       if (ref.mounted) state = CheckoutPaymentFailed(order, e.message);

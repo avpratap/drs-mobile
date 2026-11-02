@@ -170,7 +170,7 @@ final class CheckoutControllerProvider
 }
 
 String _$checkoutControllerHash() =>
-    r'975805302ed4c8a674b88e2142db4b2656d3c2f9';
+    r'522247543364547000d6a73f57cb99f079536ca8';
 
 abstract class _$CheckoutController extends $Notifier<CheckoutState> {
   CheckoutState build();
