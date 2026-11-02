@@ -118,6 +118,24 @@ void main() {
       expect(await h.db.allPending(), isEmpty);
       expect(find.textContaining('changed by office'), findsNothing);
     });
+
+    deliveryTest("server recorded the rider's OWN partial delivery: done, not a "
+        'false "office" conflict', (t, h) async {
+      setDevice(t, const Size(412, 915));
+      await h.start(t);
+      h.server.offline = true;
+      await _deliver(t);
+      // partially_delivered is the rider's own legitimate outcome (qty < planned), not an
+      // office override — reconciliation must treat it as success, not a conflict.
+      _stop(h, 11)['status'] = 'partially_delivered';
+      h.server.offline = false;
+      await goTo(t, Routes.today);
+      await t.tap(find.text('Sync now'));
+      await t.pumpAndSettle();
+      expect(await h.db.allPending(), isEmpty); // reconciled as success
+      expect(find.textContaining('changed by office'), findsNothing);
+      expect(find.textContaining('partly delivered'), findsNothing);
+    });
   });
 
   group('retry / backoff', () {

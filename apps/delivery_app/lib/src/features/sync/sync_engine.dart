@@ -202,7 +202,14 @@ class SyncEngine {
     final wanted = a.kind == 'fail'
         ? DeliveryStatus.failed
         : DeliveryStatus.delivered;
-    if (server == wanted) {
+    // A deliver action is satisfied by EITHER delivered or partially_delivered: a partial
+    // delivery is the rider's OWN legitimate outcome, not an office override. Matching only
+    // exactly 'delivered' here would misreport the rider's own partial delivery as a conflict
+    // ("the office already marked this partly delivered") and push them through the
+    // acknowledge-conflict flow even though their update is what the server reflects.
+    final satisfied =
+        a.kind == 'fail' ? server == DeliveryStatus.failed : server.isDone;
+    if (satisfied) {
       // Already recorded (e.g. a replay outside the idempotency window).
       await _complete(a);
       return SyncOutcome.done;
