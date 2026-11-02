@@ -85,8 +85,9 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     final now = clock();
     final k = 'idem:$scope:$fingerprint';
-    final row =
-        await (select(cachedJson)..where((t) => t.key.equals(k))).getSingleOrNull();
+    final row = await (select(
+      cachedJson,
+    )..where((t) => t.key.equals(k))).getSingleOrNull();
     if (row != null && now.difference(row.fetchedAt) < ttl) return row.json;
     final key = create();
     await writeJson(k, key, now);

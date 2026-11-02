@@ -98,8 +98,13 @@ class CheckoutController extends _$CheckoutController {
     final fingerprint =
         '${address.id}|${cart.id}|${cart.subtotal.paise}|'
         '${cart.lines.map((l) => '${l.productId}:${l.qty}').join(',')}';
-    final key = await ref.read(appDatabaseProvider).idempotencyKey(
-          'order', fingerprint, _idemTtl, _uuid.v4,
+    final key = await ref
+        .read(appDatabaseProvider)
+        .idempotencyKey(
+          'order',
+          fingerprint,
+          _idemTtl,
+          _uuid.v4,
           clock: ref.read(clockProvider),
         );
     state = const CheckoutBusy('Placing your order…');
@@ -124,8 +129,13 @@ class CheckoutController extends _$CheckoutController {
     try {
       intent = await _repo.createPayment(
         orderId: order.id,
-        idempotencyKey: await ref.read(appDatabaseProvider).idempotencyKey(
-              'payment', '${order.id}', _idemTtl, _uuid.v4,
+        idempotencyKey: await ref
+            .read(appDatabaseProvider)
+            .idempotencyKey(
+              'payment',
+              '${order.id}',
+              _idemTtl,
+              _uuid.v4,
               clock: ref.read(clockProvider),
             ),
       );
