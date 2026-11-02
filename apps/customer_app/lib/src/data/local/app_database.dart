@@ -69,6 +69,30 @@ class AppDatabase extends _$AppDatabase {
         CachedJsonCompanion.insert(key: key, json: json, fetchedAt: at),
       );
 
+  /// Crash-durable idempotency key for a checkout step (order / payment). Returns the key
+  /// already stored for this (scope, fingerprint) if it is still within [ttl], otherwise
+  /// generates one with [create], persists it and returns it. So an order/payment whose
+  /// process was killed between request and response REPLAYS on the server (same key) when
+  /// retried after a restart, instead of creating a duplicate; a deliberate re-order of the
+  /// same cart after the TTL gets a fresh key. Stored in [CachedJson], so it is wiped on
+  /// sign-out with the rest of the account-scoped cache.
+  Future<String> idempotencyKey(
+    String scope,
+    String fingerprint,
+    Duration ttl,
+    String Function() create, {
+    required DateTime Function() clock,
+  }) async {
+    final now = clock();
+    final k = 'idem:$scope:$fingerprint';
+    final row =
+        await (select(cachedJson)..where((t) => t.key.equals(k))).getSingleOrNull();
+    if (row != null && now.difference(row.fetchedAt) < ttl) return row.json;
+    final key = create();
+    await writeJson(k, key, now);
+    return key;
+  }
+
   /// Removes everything tied to the signed-in account (call on sign-out).
   Future<void> clearUserData() => delete(cachedJson).go();
 
